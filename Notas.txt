@@ -1,0 +1,10 @@
+como conseguir que el servidor select sea  cincurrente si solo tiene un flujo de ejecucion.
+IPC --> paso mensajes
+
+Posibles soluciones a servidor select concurrente:
+dar prioridad a cliente ssegun su pid
+Leo de cada peticion de lectura X bytes
+
+No caben los ficheros enteros en memoria, hay que leerlos por partes, en bloques y pasarlos pos las tuberias en varias veces.
+
+Probar con un cliente con todas las opciones posibles, por ejemplo que no sea correcta y esto no se puede hacer desde el navegador web
