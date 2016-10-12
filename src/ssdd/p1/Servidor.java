@@ -9,12 +9,10 @@ public class Servidor {
 	// Almacenar la direccion y numero de puerto
 	static private String ADDRESS;
 	static private int PORT;
-	// Puerto donde escucha el servidor
-	static private int SERVER_PORT = 2000;
 	static private String serverType;
 
 	public static void main(String[] args) {
-		//Cojo de la linea de comandos la direcion IP y el puerto en el que escuchara el banco
+
 		try{
 			ADDRESS= InetAddress.getLocalHost().toString();
 		} catch (Exception e){
@@ -22,13 +20,13 @@ public class Servidor {
 		}
 		serverType = args[0];
 		PORT = Integer.parseInt(args[1]);
+        //ADDRESS = "10.0.2.15";
+        System.out.println("addres ip: " + ADDRESS);
 
         if (serverType.equalsIgnoreCase("-s")){
-            System.out.println("Selector");
             //serverSelect();
         }else if(serverType.equalsIgnoreCase("-t")){
-            System.out.println("Threads");
-            //serverThreads();
+            serverThreads();
         }else{
             System.out.println("Opcion no soportada");
         }
@@ -37,12 +35,13 @@ public class Servidor {
 	private static void serverThreads(){
         ServerSocket serverSocket = null; //para escuchar
         // Inicializa socket del cliente con el que se comunica el servidor,
-        serverSocket = creaListenSocket(SERVER_PORT);
+        serverSocket = creaListenSocket(PORT);
         Socket clientSocket = null;       //uno por cliente
 
         try{
             //Lanza un thread cuando se conecta un cliente
             while (true) {
+                System.out.println("lanza runnable");
                 clientSocket = creaClientSocket(serverSocket);
                 Thread t = new Thread(new ServidorRunnable(clientSocket,ADDRESS,PORT));
                 t.start();

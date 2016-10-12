@@ -33,12 +33,12 @@ public class ServidorRunnable implements Runnable{
 			if(!parser.isComplete()){
 				estado += "400 Bad Request";
 			}else {
-				if (parser.getMethod() == "GET") {
+				if (parser.getMethod().equalsIgnoreCase("GET")){
 					path = parser.getPath();
 					estado = buscarFichero(path);
 					body = new String(parser.getBody().array(), "UTF-8");
 
-				} else if (parser.getMethod() == "POST") {
+				} else if (parser.getMethod().equalsIgnoreCase("POST")){
 
 				} else {
                     //Metodo no aceptado
