@@ -8,3 +8,9 @@ Leo de cada peticion de lectura X bytes
 No caben los ficheros enteros en memoria, hay que leerlos por partes, en bloques y pasarlos pos las tuberias en varias veces.
 
 Probar con un cliente con todas las opciones posibles, por ejemplo que no sea correcta y esto no se puede hacer desde el navegador web
+
+
+JAVA en linux:
+compilar: java ssdd/p1/*.java
+crear jar: jar cmf ssdd/p1/temp.mf p1.jar ssdd/p1/*.class
+ejecutar: java -jar p1.jar -t 5

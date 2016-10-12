@@ -1,6 +1,7 @@
 package ssdd.p1;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.ServerSocket;
 
@@ -10,31 +11,52 @@ public class Servidor {
 	static private int PORT;
 	// Puerto donde escucha el servidor
 	static private int SERVER_PORT = 2000;
-	
+	static private String serverType;
+
 	public static void main(String[] args) {
 		//Cojo de la linea de comandos la direcion IP y el puerto en el que escuchara el banco
-		ADDRESS = args[0];
-		PORT = Integer.parseInt(args[1]);
-		
-		ServerSocket serverSocket = null; //para escuchar
-		Socket clientSocket = null;       //uno por cliente
-
-		// Inicializa socket del cliente con el que se comunica el servidor,
-		serverSocket = creaListenSocket(SERVER_PORT);
-
 		try{
-			//Lanza un thread cuando se conecta un cliente
-			while (true) {
-				clientSocket = creaClientSocket(serverSocket);
-				Thread t = new Thread(new ServidorRunnable(clientSocket,ADDRESS,PORT));
-				t.start();
-			}
-			// Cierre del Socket para comunicarse con el servidor.
-			//serverSocket.close();
+			ADDRESS= InetAddress.getLocalHost().toString();
 		} catch (Exception e){
 			System.err.println(e);
 		}
+		serverType = args[0];
+		PORT = Integer.parseInt(args[1]);
+
+        if (serverType.equalsIgnoreCase("-s")){
+            System.out.println("Selector");
+            //serverSelect();
+        }else if(serverType.equalsIgnoreCase("-t")){
+            System.out.println("Threads");
+            //serverThreads();
+        }else{
+            System.out.println("Opcion no soportada");
+        }
 	}
+
+	private static void serverThreads(){
+        ServerSocket serverSocket = null; //para escuchar
+        // Inicializa socket del cliente con el que se comunica el servidor,
+        serverSocket = creaListenSocket(SERVER_PORT);
+        Socket clientSocket = null;       //uno por cliente
+
+        try{
+            //Lanza un thread cuando se conecta un cliente
+            while (true) {
+                clientSocket = creaClientSocket(serverSocket);
+                Thread t = new Thread(new ServidorRunnable(clientSocket,ADDRESS,PORT));
+                t.start();
+            }
+            // Cierre del Socket para comunicarse con el servidor.
+            //serverSocket.close();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
+
+    private static void serverSelect(){
+
+    }
 
 	//Crea un socket de servidor
 	//Aborta programa si no lo logra
