@@ -1,7 +1,6 @@
 package ssdd.p1;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
@@ -15,6 +14,7 @@ public class ServidorRunnable implements Runnable{
 	static private String ADDRESS;
 	static private int PORT;
     private Socket clientSocket; //socket de conexion con cliente
+    private OutputStream clientResponse;
 
     BlockingHTTPParser parser = new BlockingHTTPParser();
     //Info de respuesta del servidor
@@ -22,33 +22,48 @@ public class ServidorRunnable implements Runnable{
 	private String path;
 	private String body;
     private String type;
-    private String length;
+    private String length = "Content-Length: ";
 	private URLDecoder dec;
     private Pattern fname = Pattern.compile("fname=.*&");
     private Pattern content = Pattern.compile("&content=.*");
+
+    private static String FORBIDDEN = "<html><head>\n<title>403 Forbidden</title>\n" +
+            "</head><body>\n<h1>Forbidden</h1>\n</body></html>\n";
+    private static String NOTFOUND = "<html><head>\n<title>404 Not Found</title>\n" +
+            "</head><body>\n<h1>Not Found</h1>\n</body></html>\n";
+
     //Constructor para almacenar socket, direccion y puerto
 	public ServidorRunnable(Socket S,String address,int port){
 		this.clientSocket=S;
 		ADDRESS = address;
 		PORT = port;
 	}
+
 	public void run(){
 		try{
 			parser.parseRequest(clientSocket.getInputStream());
-			//Peticion esta incompleta
+			//Peticion incompleta
 			if(!parser.isComplete()){
-				estado += "400 Bad Request";
-			}else {
+				estado += "400 Bad Request\n";
+			}
+			//Peticion tipo GET
+			else {
 				if (parser.getMethod().equalsIgnoreCase("GET")){
 					path = parser.getPath();
-                    System.out.println("path: " + path);
-					estado = buscarFichero(path);
-                    System.out.println("Estado= " + estado);
-                    //byte[] bytes = parser.getBody().getBytes(Charset.forName("UTF-8" ));
-                    //String v = new String(bytes,Charset.forName("UTF-8") );
-                    //body = new String(parser.getBody().array());
+					estado += buscarFichero(path);
 
-				} else if (parser.getMethod().equalsIgnoreCase("POST")){
+                    //Devuelve contenido al cliente por bytebuffer
+                    //
+                    Integer aux = body.length();
+                    length += aux.toString()+"\n\n";
+                    clientResponse = clientSocket.getOutputStream();
+                    clientResponse.write(estado.getBytes());
+                    clientResponse.write(length.getBytes());
+                    clientResponse.write(body.getBytes());
+                    clientResponse.close();
+				}
+                //Peticion tipo POST
+				else if (parser.getMethod().equalsIgnoreCase("POST")){
 					body = new String(parser.getBody().array(), "UTF-8");
 					dec = new URLDecoder();
 					String descodificado = dec.decode(body, "UTF-8");
@@ -67,7 +82,7 @@ public class ServidorRunnable implements Runnable{
 
 				} else {
                     //Metodo no aceptado
-					estado += "501 Not Implemented";
+					estado += "501 Not Implemented\n";
 				}
 			}
 		}catch (IOException e) {
@@ -86,38 +101,43 @@ public class ServidorRunnable implements Runnable{
 	 */
 	private String buscarFichero(String path){
 		String[] subDirs = path.split("/");
-        for(int i=0; i<subDirs.length;i++ ){
-            System.out.println(subDirs[i]);
-        }
 		if(subDirs.length>2){
-            body = " <html><head>\n" +
-                    "<title>403 Forbidden</title>\n" +
-                    "</head><body>\n" +
-                    "<h1>Forbidden</h1>\n" +
-                    "</body></html>";
-			return "403 Forbidden";
+            body = FORBIDDEN;
+			return "403 Forbidden\n";
 		}else if(subDirs.length == 0) {
-            body = " <html><head>\n" +
-                    "<title>404 Not Found</title>\n" +
-                    "</head><body>\n" +
-                    "<h1>Not Found</h1>\n" +
-                    "</body></html>";
-            return "404 Not Found";
+            body = NOTFOUND;
+            return "404 Not Found\n";
         }else{
+            //obtiene path actual
             String p = System.getProperty("user.dir") + path;
-            File dir = new File(p); //obtiene path actual
+            File dir = new File(p);
             if (dir.exists()) {
-                System.out.println(parser.getBody().flip());
-                body = new String(parser.getBody().array());
-                return "200 OK";
+                body = leerFichero(p);
+                return "200 OK\n";
             } else {
-                body = " <html><head>\n" +
-                        "<title>404 Not Found</title>\n" +
-                        "</head><body>\n" +
-                        "<h1>Not Found</h1>\n" +
-                        "</body></html>";
-                return "404 Not Found";
+                body = NOTFOUND;
+                return "404 Not Found\n";
             }
         }
 	}
+
+    /**
+     * Lee el contenido del fichero y lo devuelve
+     * Devuelve null e informa del error en caso de producirse
+     */
+    private static String leerFichero(String archivo){
+        try {
+            String cadena; String cuerpo = "";
+            FileReader f = new FileReader(archivo);
+            BufferedReader b = new BufferedReader(f);
+            while ((cadena = b.readLine()) != null) {
+                cuerpo += cadena + "\n";
+            }
+            b.close();
+            return cuerpo;
+        }
+        catch (FileNotFoundException e){System.out.println("No se ha encontrado el fichero");}
+        catch (IOException e){System.out.println("Excepcion: "+e);}
+        return null;
+    }
 }
