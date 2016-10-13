@@ -59,8 +59,7 @@ public class Servidor {
 
 	//Crea un socket de servidor
 	//Aborta programa si no lo logra
-	private static 
-	        ServerSocket creaListenSocket(int serverSockNum){
+	private static ServerSocket creaListenSocket(int serverSockNum){
 		ServerSocket server = null;
 
 		try{
@@ -75,8 +74,7 @@ public class Servidor {
 
   	//Establece conexion con server y devuelve socket
   	//Aborta programa si no lo logra
-  	private static
-	    Socket creaClientSocket(ServerSocket server){
+  	private static Socket creaClientSocket(ServerSocket server){
   		Socket res = null;
 
   		try {
