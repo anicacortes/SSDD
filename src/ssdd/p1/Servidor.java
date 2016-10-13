@@ -41,7 +41,6 @@ public class Servidor {
         try{
             //Lanza un thread cuando se conecta un cliente
             while (true) {
-                System.out.println("lanza runnable");
                 clientSocket = creaClientSocket(serverSocket);
                 Thread t = new Thread(new ServidorRunnable(clientSocket,ADDRESS,PORT));
                 t.start();
