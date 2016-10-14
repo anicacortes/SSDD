@@ -18,17 +18,21 @@ public class ServidorRunnable implements Runnable{
     //Info de respuesta del servidor
     static private String estado;
     static private String path;
-    static private String body;
+    static private String bodyRespuesta;
+    static private String bodyPeticion;
     static private String type;
     static private String length;
     static private URLDecoder dec;
     static private Pattern fname = Pattern.compile("fname=.*&");
     static private Pattern content = Pattern.compile("&content=.*");
 
-    private static String FORBIDDEN = "<html><head>\n<title>403 Forbidden</title>\n" +
+    private static final String FORBIDDEN = "<html><head>\n<title>403 Forbidden</title>\n" +
             "</head><body>\n<h1>Forbidden</h1>\n</body></html>\n";
-    private static String NOTFOUND = "<html><head>\n<title>404 Not Found</title>\n" +
+    private static final String NOTFOUND = "<html><head>\n<title>404 Not Found</title>\n" +
             "</head><body>\n<h1>Not Found</h1>\n</body></html>\n";
+    private static final String EXITOPOST = "<html><head>\n<title>¡Éxito!</title>\n</head><body>" +
+            "<h1>¡Éxito!</h1>\n<p>Se ha escrito lo siguiente en el fichero" + path + ":</p>\n<pre>" +
+            bodyRespuesta +  "</pre>\n</body></html>";
 
     //Constructor para almacenar socket, direccion y puerto
 	public ServidorRunnable(Socket S,String address,int port){
@@ -49,28 +53,25 @@ public class ServidorRunnable implements Runnable{
 				if (parser.getMethod().equalsIgnoreCase("GET")){
 					path = parser.getPath();
 					estado = buscarFichero(path);
-                    respuestaCliente();
+                    respuestaCliente(bodyRespuesta);
 				}
                 //Peticion tipo POST
 				else if (parser.getMethod().equalsIgnoreCase("POST")){
-					body = new String(parser.getBody().array(), "UTF-8");
-                    System.out.println("body recibido: " + body);
+					bodyPeticion = new String(parser.getBody().array(), "UTF-8");
+                    System.out.println("body recibido: " + bodyPeticion);
 					dec = new URLDecoder();
-					String descodificado = dec.decode(body, "UTF-8");
+					String descodificado = dec.decode(bodyPeticion, "UTF-8");
 
-                    Matcher matcherF = fname.matcher(descodificado);
-                    Matcher matcherC = content.matcher(descodificado);
-                    if (matcherF.matches()) {
-                        path = matcherF.group();
-                    }
-                    System.out.println("path: "+path);
-                    //Comprobaciones del fichero
-                    estado = buscarFichero(path);
-                    if (matcherC.matches()) {
-                        body = matcherC.group();
-                    }
-                    System.out.println("body: "+body);
-                    respuestaCliente();
+                    //fname=nombre_fichero&content=contenido_fichero
+                    String[] parts = descodificado.split("&");
+                    String[] p = parts[0].split("=");
+                    path = p[1];
+                    String[] q = parts[1].split("=");
+                    bodyRespuesta = q[1];
+                    System.out.println("path: " + path);
+                    System.out.println("body fichero: " + bodyRespuesta);
+                    buscarFichero(path);
+                    respuestaCliente(EXITOPOST);
 				} else {
                     //Metodo no aceptado
 					estado = "HTTP/1.1 501 Not Implemented\n";
@@ -83,7 +84,7 @@ public class ServidorRunnable implements Runnable{
    		System.out.println(estado);
         System.out.println(path);
         System.out.println(length);
-        System.out.println(body);
+        System.out.println(bodyRespuesta);
 	}
 
 	/**
@@ -93,21 +94,30 @@ public class ServidorRunnable implements Runnable{
 	private String buscarFichero(String path){
 		String[] subDirs = path.split("/");
 		if(subDirs.length>2){
-            body = FORBIDDEN;
+            bodyRespuesta = FORBIDDEN;
 			return "HTTP/1.1 403 Forbidden\n";
 		}else if(subDirs.length == 0) {
-            body = NOTFOUND;
+            bodyRespuesta = NOTFOUND;
             return "HTTP/1.1 404 Not Found\n";
         }else{
             //obtiene path actual
             String p = System.getProperty("user.dir") + path;
-            File dir = new File(p);
-            if (dir.exists()) {
-                body = leerFichero(p);
-                return "HTTP/1.1 200 OK\n";
-            } else {
-                body = NOTFOUND;
-                return "HTTP/1.1 404 Not Found\n";
+            if(parser.getMethod().equalsIgnoreCase("GET")) {
+                File dir = new File(p);
+                if (dir.exists()) {
+                    bodyRespuesta = leerFichero(p);
+                    return "HTTP/1.1 200 OK\n";
+                } else {
+                    bodyRespuesta = NOTFOUND;
+                    return "HTTP/1.1 404 Not Found\n";
+                }
+            }else{
+                boolean ok = escribirFichero(p);
+                if (ok){return "HTTP/1.1 200 OK\n";}
+                else{
+                    bodyRespuesta = NOTFOUND;
+                    return "HTTP/1.1 404 Not Found\n";
+                }
             }
         }
 	}
@@ -132,14 +142,35 @@ public class ServidorRunnable implements Runnable{
         return null;
     }
 
-    private static void respuestaCliente() throws IOException{
+    /**
+     * Crea el fichero path con el contenido body
+     * Devuelve null e informa del error en caso de producirse
+     */
+    private static boolean escribirFichero(String archivo){
+        try {
+            FileWriter fichero = new FileWriter(archivo);
+            BufferedWriter b = new BufferedWriter(fichero);
+            b.write(bodyRespuesta);
+            b.close();
+            return true;
+        }catch (IOException e){
+            System.out.println("Excepcion: "+e);
+            return false;
+        }
+    }
+
+    /**
+     *
+     * @throws IOException
+     */
+    private static void respuestaCliente(String respuesta) throws IOException{
         //Devuelve contenido al cliente
-        Integer aux = body.length();
+        Integer aux = bodyRespuesta.length();
         length = "Content-Length: " + aux.toString() + "\n\n";
         clientResponse = clientSocket.getOutputStream();
         clientResponse.write(estado.getBytes());
         clientResponse.write(length.getBytes());
-        clientResponse.write(body.getBytes());
+        clientResponse.write(respuesta.getBytes());
         clientResponse.close();
     }
 }
