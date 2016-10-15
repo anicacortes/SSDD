@@ -14,3 +14,8 @@ JAVA en linux:
 compilar: javac ssdd/p1/*.java
 crear jar: jar cmf ssdd/p1/temp.mf p1.jar ssdd/p1/*.class
 ejecutar: java -jar p1.jar -t 5
+
+Como probar peticiones distintas de get y post:
+-telnet localhost puerto (cliente http)
+-peticion incompleta: huibvb
+-peticion no soportada: PUT /path/filename.html HTTP/1.1

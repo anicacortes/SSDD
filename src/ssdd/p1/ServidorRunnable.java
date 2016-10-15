@@ -3,7 +3,7 @@ package ssdd.p1;
 import java.io.*;
 import java.net.Socket;
 import java.net.URLDecoder;
-import java.util.regex.Matcher;
+import java.nio.file.Files;
 import java.util.regex.Pattern;
 
 public class ServidorRunnable implements Runnable{	
@@ -30,9 +30,10 @@ public class ServidorRunnable implements Runnable{
             "</head><body>\n<h1>Forbidden</h1>\n</body></html>\n";
     private static final String NOTFOUND = "<html><head>\n<title>404 Not Found</title>\n" +
             "</head><body>\n<h1>Not Found</h1>\n</body></html>\n";
-    private static final String EXITOPOST = "<html><head>\n<title>¡Éxito!</title>\n</head><body>" +
-            "<h1>¡Éxito!</h1>\n<p>Se ha escrito lo siguiente en el fichero" + path + ":</p>\n<pre>" +
-            bodyRespuesta +  "</pre>\n</body></html>";
+    private static final String NOTIMPLEMENTED = "<html><head>\n<title>501 Not Implemented</title>\n" +
+            "</head><body>\n<h1>Not Implemented</h1>\n</body></html>\n";
+    private static final String BADREQUEST = "<html><head>\n<title>400 Bad Request</title>\n" +
+            "</head><body>\n<h1>Bad Request</h1>\n</body></html>\n";
 
     //Constructor para almacenar socket, direccion y puerto
 	public ServidorRunnable(Socket S,String address,int port){
@@ -47,34 +48,67 @@ public class ServidorRunnable implements Runnable{
 			//Peticion incompleta
 			if(!parser.isComplete()){
 				estado = "HTTP/1.1 400 Bad Request\n";
+                bodyRespuesta = BADREQUEST;
+                type = "Content-Type: " + "text/html\n";
+                respuestaCliente(bodyRespuesta);
 			}
 			//Peticion tipo GET
 			else {
 				if (parser.getMethod().equalsIgnoreCase("GET")){
 					path = parser.getPath();
 					estado = buscarFichero(path);
+                    String extension = "";
+                    int i = path.lastIndexOf('.');
+                    if (i > 0) {
+                        extension = path.substring(i+1);
+                    }
+                    if(extension.equalsIgnoreCase("jpeg") || extension.equalsIgnoreCase("png")
+                            || extension.equalsIgnoreCase("gif") || extension.equalsIgnoreCase("jpg")){
+                        type = "Content-Type: " + "/image\n";
+                    }else if(extension.equalsIgnoreCase("txt")) {
+                        type = "Content-Type: " + "text/plain\n";
+                    }else{
+                        type = "Content-Type: " + "text/html\n";
+                    }
                     respuestaCliente(bodyRespuesta);
 				}
                 //Peticion tipo POST
 				else if (parser.getMethod().equalsIgnoreCase("POST")){
+                    type = "Content-Type: " + "text/html\n";
 					bodyPeticion = new String(parser.getBody().array(), "UTF-8");
-                    System.out.println("body recibido: " + bodyPeticion);
 					dec = new URLDecoder();
 					String descodificado = dec.decode(bodyPeticion, "UTF-8");
 
                     //fname=nombre_fichero&content=contenido_fichero
                     String[] parts = descodificado.split("&");
                     String[] p = parts[0].split("=");
-                    path = p[1];
-                    String[] q = parts[1].split("=");
-                    bodyRespuesta = q[1];
-                    System.out.println("path: " + path);
-                    System.out.println("body fichero: " + bodyRespuesta);
-                    buscarFichero(path);
-                    respuestaCliente(EXITOPOST);
+                    if(parts.length>0){
+                        path = "/"+p[1];
+                        String[] q = parts[1].split("=");
+                        bodyRespuesta = q[1];
+                        System.out.println("path: " + path);
+                        System.out.println("body fichero: " + bodyRespuesta);
+                        estado = buscarFichero(path);
+                    }else{
+                        estado = "HTTP/1.1 404 Not Found\n";
+                        bodyRespuesta = NOTFOUND;
+                        type = "Content-Type: " + "text/html\n";
+                    }
+                    if(estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")){
+                        String postRespuesta = "<html><head>\n<title>¡Éxito!</title>\n</head><body>" +
+                                "<h1>¡\\u00c9xito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
+                                bodyRespuesta +  "</pre>\n</body></html>";
+                        respuestaCliente(postRespuesta);
+                    }else{
+                        respuestaCliente(bodyRespuesta);
+                    }
+
 				} else {
                     //Metodo no aceptado
 					estado = "HTTP/1.1 501 Not Implemented\n";
+                    bodyRespuesta = NOTIMPLEMENTED;
+                    type = "Content-Type: " + "text/html\n";
+                    respuestaCliente(bodyRespuesta);
 				}
 			}
 		}catch (IOException e) {
@@ -148,7 +182,9 @@ public class ServidorRunnable implements Runnable{
      */
     private static boolean escribirFichero(String archivo){
         try {
-            FileWriter fichero = new FileWriter(archivo);
+            File f = new File(archivo);
+            f.createNewFile();
+            FileWriter fichero = new FileWriter(f);
             BufferedWriter b = new BufferedWriter(fichero);
             b.write(bodyRespuesta);
             b.close();
@@ -160,15 +196,15 @@ public class ServidorRunnable implements Runnable{
     }
 
     /**
-     *
-     * @throws IOException
+     * Envía la respueta el cliente, tanto cabecera como cuerpo.
      */
     private static void respuestaCliente(String respuesta) throws IOException{
         //Devuelve contenido al cliente
-        Integer aux = bodyRespuesta.length();
+        Integer aux = respuesta.length();
         length = "Content-Length: " + aux.toString() + "\n\n";
         clientResponse = clientSocket.getOutputStream();
         clientResponse.write(estado.getBytes());
+        clientResponse.write(type.getBytes());
         clientResponse.write(length.getBytes());
         clientResponse.write(respuesta.getBytes());
         clientResponse.close();
