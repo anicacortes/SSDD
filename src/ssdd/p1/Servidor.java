@@ -1,5 +1,6 @@
 package ssdd.p1;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 public class Servidor {
@@ -8,7 +9,7 @@ public class Servidor {
 	static private int PORT;
 	static private String serverType;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException{
 
 		try{
 			ADDRESS= InetAddress.getLocalHost().toString();
