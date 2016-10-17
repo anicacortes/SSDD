@@ -71,7 +71,6 @@ public class ServidorSelect {
                         System.out.println("El cliente quiere escribir");
                         SocketChannel channelClient = (SocketChannel) k.channel();
                         keyClient = channelClient.register(selector, SelectionKey.OP_WRITE); //escucha cliente para escribir
-                        System.out.println("Un cliente quiere escribir");
                         buffer.clear();
                         String respuesta = "";
                         buffer.put(respuesta.getBytes());
