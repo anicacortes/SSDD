@@ -35,6 +35,9 @@ public class ServidorRunnable implements Runnable{
 
 	public void run(){
 		try{
+
+            //head section of my html file
+            //<link rel="shortcut icon" href="">
 			parser.parseRequest(clientSocket.getInputStream());
 			//Peticion incompleta
 			if(!parser.isComplete()){
@@ -86,8 +89,8 @@ public class ServidorRunnable implements Runnable{
                         type = "Content-Type: " + "text/html\n";
                     }
                     if(estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")){
-                        String postRespuesta = "<html><head>\n<title>¡Éxito!</title>\n</head><body>" +
-                                "<h1>¡\\u00c9xito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
+                        String postRespuesta = "<html><head>\n<title>¡Exito!</title>\n</head><body>" +
+                                "<h1>¡Exito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
                                 bodyRespuesta +  "</pre>\n</body></html>";
                         respuestaCliente(postRespuesta);
                     }else{
