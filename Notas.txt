@@ -19,3 +19,8 @@ Como probar peticiones distintas de get y post:
 -telnet localhost puerto (cliente http)
 -peticion incompleta: huibvb
 -peticion no soportada: PUT /path/filename.html HTTP/1.1
+
+
+Ultimas modificaciones:
+He quitado comentarios para poder ver las respuestar y ver que es lo que lee y que no.
+Ademas he corregido los corchetes que estaban mal
