@@ -3,14 +3,9 @@ package ssdd.p1;
 import java.io.*;
 import java.net.Socket;
 import java.net.URLDecoder;
-import java.nio.file.Files;
-import java.util.regex.Pattern;
 
 public class ServidorRunnable implements Runnable{	
-	
-	// Guardar direccion y puerto donde escucha servidor
-	static private String ADDRESS;
-	static private int PORT;
+
     static private Socket clientSocket; //socket de conexion con cliente
     static private OutputStream clientResponse;
 
@@ -23,8 +18,6 @@ public class ServidorRunnable implements Runnable{
     static private String type;
     static private String length;
     static private URLDecoder dec;
-    static private Pattern fname = Pattern.compile("fname=.*&");
-    static private Pattern content = Pattern.compile("&content=.*");
 
     private static final String FORBIDDEN = "<html><head>\n<title>403 Forbidden</title>\n" +
             "</head><body>\n<h1>Forbidden</h1>\n</body></html>\n";
@@ -36,10 +29,8 @@ public class ServidorRunnable implements Runnable{
             "</head><body>\n<h1>Bad Request</h1>\n</body></html>\n";
 
     //Constructor para almacenar socket, direccion y puerto
-	public ServidorRunnable(Socket S,String address,int port){
+	public ServidorRunnable(Socket S){
 		this.clientSocket=S;
-		ADDRESS = address;
-		PORT = port;
 	}
 
 	public void run(){
