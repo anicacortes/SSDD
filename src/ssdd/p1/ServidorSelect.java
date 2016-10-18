@@ -8,7 +8,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -38,7 +37,7 @@ public class ServidorSelect {
     public static void serverSelect() throws IOException {
         Selector selector = Selector.open();
         ByteBuffer bufferEnt = ByteBuffer.allocate(256); //capacidadEnt
-        ByteBuffer bufferSal = ByteBuffer.allocate(256); //capacidadSal
+        ByteBuffer bufferSal = ByteBuffer.allocate(256);
 
         ServerSocketChannel channelServer = ServerSocketChannel.open();
         channelServer.configureBlocking(false);  //Configura canal no bloqueante
@@ -48,10 +47,6 @@ public class ServidorSelect {
         while (true) {
             System.out.println("Esperando al select...");
             int nClientes = selector.select();
-            /*if (nClientes == 0) {
-                continue;
-            }*/
-            //System.out.println("Numero de clientes seleccionados: " + nClientes);
             //Crea iterador sobre las peticiones que estan pendientes de atender
             Set selectedKeys = selector.selectedKeys();
             Iterator iter = selectedKeys.iterator();
@@ -59,7 +54,6 @@ public class ServidorSelect {
             while (iter.hasNext()) {
 
                 SelectionKey keyClient = (SelectionKey) iter.next();
-                System.out.println("Id: "+ keyClient.toString());
                 iter.remove();
                 //Cliente quiere conectarse al servidor
                 if (keyClient.isAcceptable()) {
@@ -88,7 +82,14 @@ public class ServidorSelect {
                         estado = "HTTP/1.1 400 Bad Request\n";
                         bodyRespuesta = BADREQUEST;
                         type = "Content-Type: " + "text/html\n";
-                        channelClient.register(selector, SelectionKey.OP_WRITE, parser);
+                        bufferSal.clear();
+                        Integer aux = bodyRespuesta.length();
+                        String length = "Content-Length: " + aux.toString() + "\n\n";
+                        String respuesta = estado+length+bodyRespuesta;
+                        bufferSal = ByteBuffer.allocate(respuesta.length());
+                        bufferSal.put(respuesta.getBytes());
+                        bufferSal.flip();
+                        channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
                     } else if (parser.isComplete()) {
                         System.out.println("peticion completa");
                         if (parser.getMethod().equalsIgnoreCase("GET")) {
@@ -141,16 +142,18 @@ public class ServidorSelect {
                             bodyRespuesta = NOTIMPLEMENTED;
                             type = "Content-Type: " + "text/html\n";
                         }
-                        channelClient.register(selector, SelectionKey.OP_WRITE, parser);
-                        System.out.println("Se ha marcado pendiente escritura");
-                    } else {
-                        //HAY QUE HACER LO DE SEGUIR LEYENDO
-                        System.out.println("No he acabado de leer");
-                        //channelClient.register(selector, SelectionKey.OP_READ, parser);
-                        /*
 
-                        channelClient.register(selector, SelectionKey.OP_WRITE, parser);
-                        */
+                        bufferSal.clear();
+                        Integer aux = bodyRespuesta.length();
+                        String length = "Content-Length: " + aux.toString() + "\n\n";
+                        String respuesta = estado+length+bodyRespuesta;
+                        bufferSal = ByteBuffer.allocate(respuesta.length());
+                        bufferSal.put(respuesta.getBytes());
+                        bufferSal.flip();
+                        //Asociar el buffer de salida al cliente
+                        channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
+                        bufferEnt.clear();
+                        System.out.println("Se ha marcado pendiente escritura");
                     }
                     System.out.println("path: " + path);
                     System.out.println("estado: " + estado);
@@ -168,30 +171,14 @@ public class ServidorSelect {
 
                 //Cliente esta preparado para leer la respuesta del servidor
                 else if (keyClient.isWritable()) {
-                    bufferSal = ByteBuffer.allocate(bodyRespuesta.length()*2);
+                    SocketChannel channelClient = (SocketChannel) keyClient.channel();
+                    bufferSal = (ByteBuffer) keyClient.attachment();
                     System.out.println("El cliente quiere escribir");
                     System.out.println("respuesta: " + bodyRespuesta);
-                    SocketChannel channelClient = (SocketChannel) keyClient.channel();
-                    //keyClient = channelClient.register(selector, SelectionKey.OP_WRITE); //escucha cliente para escribir
-                    bufferSal.clear();
-                    Integer aux = bodyRespuesta.length();
-                    String length = "Content-Length: " + aux.toString() + "\n\n";
-                    String res = estado+length+bodyRespuesta;
-
-                 //   ByteBuffer.wrap(estado.getBytes());
-                 //   ByteBuffer.wrap(length.getBytes());
-                    bufferSal = ByteBuffer.wrap(res.getBytes());
-//                    bufferSal.put(estado.getBytes(Charset.forName("UTF-8")));
-//                    bufferSal.put(length.getBytes(Charset.forName("UTF-8")));
-//                    bufferSal.put(bodyRespuesta.getBytes(Charset.forName("UTF-8")));
                     int bytes = channelClient.write(bufferSal);
-                    System.out.println("Escritos"+bytes+"bytes por el canal");
-                    bufferSal.flip();
-                    /*while (bufferSal.hasRemaining()) {
-                        channelClient.write(bufferSal);
-                    }*/
+                    System.out.println("Escritos "+bytes+" bytes por el canal");
                     if(bufferSal.hasRemaining()){
-                        channelClient.close();
+                        //channelClient.close();
                         System.out.println("Queda por escribir en buffer");
                     } else{
                         channelClient.close();
