@@ -12,11 +12,11 @@ public class ServidorThreads {
         this.PORT = port;
     }
 
-    public static void serverThreads(){
-        ServerSocket serverSocket = null; //para escuchar
+    public static void serverThreads()  throws IOException{
+        ServerSocket serverSocket = null;
         // Inicializa socket del cliente con el que se comunica el servidor,
         serverSocket = creaListenSocket(PORT);
-        Socket clientSocket = null;       //uno por cliente
+        Socket clientSocket = null;
         try{
             //Lanza un thread cuando se conecta un cliente
             while (true) {
@@ -24,37 +24,27 @@ public class ServidorThreads {
                 Thread t = new Thread(new ServidorRunnable(clientSocket));
                 t.start();
             }
-            // Cierre del Socket para comunicarse con el servidor.
-            //serverSocket.close();
         } catch (Exception e){
             System.err.println(e);
         }
     }
 
-    //Crea un socket de servidor
-    //Aborta programa si no lo logra
-    private static ServerSocket creaListenSocket(int serverSockNum){
+    /**
+     * Crea un socket del servidor
+     */
+    private static ServerSocket creaListenSocket(int serverSockNum) throws IOException{
         ServerSocket server = null;
-        try{
-            server = new ServerSocket(serverSockNum);
-        } catch (IOException e) {
-            System.err.println("Problems in port: " +
-                    serverSockNum);
-            System.exit(-1);
-        }
+        server = new ServerSocket(serverSockNum);
         return server;
     }
 
-    //Establece conexion con server y devuelve socket
-    //Aborta programa si no lo logra
-    private static Socket creaClientSocket(ServerSocket server){
+    /**
+     * Establece conexion con server y devuelve el socket
+     * Aborta programa si no lo logra
+     */
+    private static Socket creaClientSocket(ServerSocket server) throws IOException{
         Socket res = null;
-        try {
-            res = server.accept();
-        } catch (IOException e) {
-            System.err.println("Accept failed.");
-            System.exit(1);
-        }
+        res = server.accept();
         return res;
     }
 }

@@ -9,7 +9,7 @@ public class Servidor {
 	static private int PORT;
 	static private String serverType;
 
-	public static void main(String[] args) throws IOException{
+	public static void main(String[] args){
 
 		try{
 			ADDRESS= InetAddress.getLocalHost().toString();
@@ -18,15 +18,18 @@ public class Servidor {
 		}
 		serverType = args[0];
 		PORT = Integer.parseInt(args[1]);
-
-        if (serverType.equalsIgnoreCase("-s")){
-			ServidorSelect s = new ServidorSelect(PORT);
-			s.serverSelect();
-        }else if(serverType.equalsIgnoreCase("-t")){
-			ServidorThreads s = new ServidorThreads(PORT);
-			s.serverThreads();
-        }else{
-            System.out.println("Opcion no soportada");
+		try {
+			if (serverType.equalsIgnoreCase("-s")) {
+				ServidorSelect s = new ServidorSelect(PORT);
+				s.serverSelect();
+			} else if (serverType.equalsIgnoreCase("-t")) {
+				ServidorThreads s = new ServidorThreads(PORT);
+				s.serverThreads();
+			} else {
+				System.out.println("Opcion no soportada");
+			}
+		}catch (IOException e){
+            System.out.println("Excepcion: " + e);
         }
 	}
 

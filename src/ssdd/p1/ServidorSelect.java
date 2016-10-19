@@ -34,51 +34,51 @@ public class ServidorSelect {
         this.PORT = port;
     }
 
+    /**
+     * Encargado de gestionar las peticiones de los clientes
+     * mediante el selector
+     */
     public static void serverSelect() throws IOException {
         Selector selector = Selector.open();
-        ByteBuffer bufferEnt = ByteBuffer.allocate(256); //capacidadEnt
+        ByteBuffer bufferEnt = ByteBuffer.allocate(256);
         ByteBuffer bufferSal = ByteBuffer.allocate(256);
 
+        //Apertura del canal y configuracion no bloqueante
         ServerSocketChannel channelServer = ServerSocketChannel.open();
-        channelServer.configureBlocking(false);  //Configura canal no bloqueante
+        channelServer.configureBlocking(false);
         channelServer.socket().bind(new InetSocketAddress(PORT));
         channelServer.register(selector, SelectionKey.OP_ACCEPT);
 
         while (true) {
-            System.out.println("Esperando al select...");
-            int nClientes = selector.select();
+            //Recibe peticiones de los clientes que se conectan
+            selector.select();
             //Crea iterador sobre las peticiones que estan pendientes de atender
             Set selectedKeys = selector.selectedKeys();
             Iterator iter = selectedKeys.iterator();
 
             while (iter.hasNext()) {
-
                 SelectionKey keyClient = (SelectionKey) iter.next();
                 iter.remove();
+
                 //Cliente quiere conectarse al servidor
                 if (keyClient.isAcceptable()) {
-                    System.out.println("Aceptamos conexion");
-                    //Aceptamos nueva conexion con cliente
+                    //Aceptamos nueva conexion con cliente y se le asocia el parser
                     SocketChannel channelClient = channelServer.accept();
                     channelClient.configureBlocking(false);
                     HTTPParser parser = new HTTPParser();
-                    //keyServer.attach(parser);   //asociar a cada cliente un httpParser
-                    //Añadimos la nueva conexion al selector
+                    //Añadimos la nueva conexion de lectura al selector
                     channelClient.register(selector, SelectionKey.OP_READ, parser);
                 }
                 //Cliente quiere enviarle datos al servidor
                 else if (keyClient.isReadable()) {
-                    System.out.println("El cliente quiere leer");
                     //Leemos datos del cliente
                     SocketChannel channelClient = (SocketChannel) keyClient.channel();
                     HTTPParser parser = (HTTPParser) keyClient.attachment();
-                    int nBytes = channelClient.read(bufferEnt);
+                    channelClient.read(bufferEnt);
                     bufferEnt.flip();
-                    System.out.println("Bytes recibidos: " + nBytes);
                     parser.parseRequest(bufferEnt);
+                    //Peticion erronea, almacena resultado en el buffer
                     if (parser.failed()) {
-                        //Metodo erroneo
-                        System.out.println("peticion erronea");
                         estado = "HTTP/1.1 400 Bad Request\n";
                         bodyRespuesta = BADREQUEST;
                         type = "Content-Type: " + "text/html\n";
@@ -86,14 +86,15 @@ public class ServidorSelect {
                         Integer aux = bodyRespuesta.length();
                         String length = "Content-Length: " + aux.toString() + "\n\n";
                         String respuesta = estado+length+bodyRespuesta;
-                        //estado = null;
                         bufferSal = ByteBuffer.allocate(respuesta.length());
                         bufferSal.put(respuesta.getBytes());
                         bufferSal.flip();
                         channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
                         bufferEnt.clear();
-                    } else if (parser.isComplete()) {
-                        System.out.println("peticion completa");
+                    }
+                    //Peticion correcta, almacena resultado en el buffer
+                    else if (parser.isComplete()) {
+                        //Peticion GET
                         if (parser.getMethod().equalsIgnoreCase("GET")) {
                             path = parser.getPath();
                             estado = buscarFichero(path, parser);
@@ -102,10 +103,8 @@ public class ServidorSelect {
                             if (i > 0) {
                                 extension = path.substring(i + 1);
                             }
-                            if (extension.equalsIgnoreCase("jpeg") || extension.equalsIgnoreCase("png")
-                                    || extension.equalsIgnoreCase("gif") || extension.equalsIgnoreCase("jpg")) {
-                                type = "Content-Type: " + "/image\n";
-                            } else if (extension.equalsIgnoreCase("txt")) {
+                            //Gestion de extension del fichero
+                            if (extension.equalsIgnoreCase("txt")) {
                                 type = "Content-Type: " + "text/plain\n";
                             } else {
                                 type = "Content-Type: " + "text/html\n";
@@ -118,7 +117,7 @@ public class ServidorSelect {
                             dec = new URLDecoder();
                             String descodificado = dec.decode(bodyPeticion, "UTF-8");
 
-                            //fname=nombre_fichero&content=contenido_fichero
+                            //Descomposicion del cuerpo:  fname=nombre_fichero&content=contenido_fichero
                             String[] parts = descodificado.split("&");
                             String[] p = parts[0].split("=");
                             if (parts.length > 0) {
@@ -131,11 +130,11 @@ public class ServidorSelect {
                                 bodyRespuesta = NOTFOUND;
                                 type = "Content-Type: " + "text/html\n";
                             }
-                            if (estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")) {
-                                String postRespuesta = "<html><head>\n<title>¡Exito!</title>\n</head><body>" +
-                                        "<h1>¡Exito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
+                           /* if (estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")) {
+                                String postRespuesta = "<html><head>\n<title>&#161&Eacutexito!</title>\n</head><body>" +
+                                        "<h1>&#161&Eacutexito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
                                         bodyRespuesta + "</pre>\n</body></html>";
-                            }
+                            }*/
                         } else {
                             //Metodo no aceptado
                             estado = "HTTP/1.1 501 Not Implemented\n";
@@ -145,40 +144,46 @@ public class ServidorSelect {
                         bufferSal.clear();
                         Integer aux = bodyRespuesta.length();
                         String length = "Content-Length: " + aux.toString() + "\n\n";
-                        String respuesta = estado+length+bodyRespuesta;
+                        String respuesta = "";
+                        if(estado.equalsIgnoreCase("HTTP/1.1 200 OK\n") && parser.getMethod().equalsIgnoreCase("POST")){
+                            String postRespuesta = "<html><head>\n<title>&#161&Eacutexito!</title>\n</head><body>" +
+                                    "<h1>&#161&Eacutexito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
+                                    bodyRespuesta + "</pre>\n</body></html>";
+                            aux = postRespuesta.length();
+                            length = "Content-Length: " + aux.toString() + "\n\n";
+                            respuesta = estado+type+length+postRespuesta;
+                            System.out.println(postRespuesta);
+                        }else{
+                            aux = bodyRespuesta.length();
+                            length = "Content-Length: " + aux.toString() + "\n\n";
+                            respuesta = estado+type+length+bodyRespuesta;
+                        }
+                        System.out.println(respuesta);
                         bufferSal = ByteBuffer.allocate(respuesta.length());
                         bufferSal.put(respuesta.getBytes());
                         bufferSal.flip();
                         //Asociar el buffer de salida al cliente
                         channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
                         bufferEnt.clear();
-                        System.out.println("Se ha marcado pendiente escritura");
-                    }else{
+                    }/*else{
                         System.out.println("El bufferEnt aun tiene datos por leer1");
-                    }
-                    System.out.println("path: " + path);
-                    System.out.println("estado: " + estado);
+                    }*/
+                    //Si la peticion no esta completa ni ha fallado, seguira leyendo en la siguiente iteracion
                     path = null; estado = null;
-                    String output = new String(bufferEnt.array()).trim();
-                    System.out.println("Mensaje del cliente: " + output);
                 }
+
                 //Cliente esta preparado para leer la respuesta del servidor
                 else if (keyClient.isWritable()) {
                     SocketChannel channelClient = (SocketChannel) keyClient.channel();
                     bufferSal = (ByteBuffer) keyClient.attachment();
-                    System.out.println("El cliente quiere escribir");
-                    System.out.println("respuestaEscritura: " + bodyRespuesta);
-                    int bytes = channelClient.write(bufferSal);
-                    System.out.println("Escritos "+bytes+" bytes por el canal");
-                    if(bufferSal.hasRemaining()){
-                        System.out.println("Queda por escribir en buffer");
-                    } else{
+                    channelClient.write(bufferSal);
+                    if(!bufferSal.hasRemaining()){
+                        System.out.println("Ha finalizado la interaccion con el cliente");
                         channelClient.close();
                     }
                 }
-                System.out.println("FIN BUCLE");
             }
-            //Borramos las claves seleccionados porque ya las hemos tratado
+            //Borramos las claves seleccionados porque ya se han tratado
             selectedKeys.clear();
         }
     }
@@ -187,7 +192,7 @@ public class ServidorSelect {
      * Busca en el path actual si se encuentra el fichero indicado
      * y devuelve el codigo necesario
      */
-    private static String buscarFichero(String path, HTTPParser parser) {
+    private static String buscarFichero(String path, HTTPParser parser) throws IOException{
         String[] subDirs = path.split("/");
         if (subDirs.length > 2) {
             bodyRespuesta = FORBIDDEN;
@@ -223,7 +228,7 @@ public class ServidorSelect {
      * Lee el contenido del fichero y lo devuelve
      * Devuelve null e informa del error en caso de producirse
      */
-    private static String leerFichero(String archivo) {
+    private static String leerFichero(String archivo) throws IOException{
         try {
             String cadena;
             String cuerpo = "";
@@ -236,8 +241,6 @@ public class ServidorSelect {
             return cuerpo;
         } catch (FileNotFoundException e) {
             System.out.println("No se ha encontrado el fichero");
-        } catch (IOException e) {
-            System.out.println("Excepcion: " + e);
         }
         return null;
     }
@@ -246,18 +249,13 @@ public class ServidorSelect {
      * Crea el fichero path con el contenido body
      * Devuelve null e informa del error en caso de producirse
      */
-    private static boolean escribirFichero(String archivo) {
-        try {
-            File f = new File(archivo);
-            f.createNewFile();
-            FileWriter fichero = new FileWriter(f);
-            BufferedWriter b = new BufferedWriter(fichero);
-            b.write(bodyRespuesta);
-            b.close();
-            return true;
-        } catch (IOException e) {
-            System.out.println("Excepcion: " + e);
-            return false;
-        }
+    private static boolean escribirFichero(String archivo) throws IOException{
+        File f = new File(archivo);
+        f.createNewFile();
+        FileWriter fichero = new FileWriter(f);
+        BufferedWriter b = new BufferedWriter(fichero);
+        b.write(bodyRespuesta);
+        b.close();
+        return true;
     }
 }

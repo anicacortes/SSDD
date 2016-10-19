@@ -19,6 +19,7 @@ public class ServidorRunnable implements Runnable{
     static private String length;
     static private URLDecoder dec;
 
+    //Respuestas a peticiones a clientes
     private static final String FORBIDDEN = "<html><head>\n<title>403 Forbidden</title>\n" +
             "</head><body>\n<h1>Forbidden</h1>\n</body></html>\n";
     private static final String NOTFOUND = "<html><head>\n<title>404 Not Found</title>\n" +
@@ -28,16 +29,18 @@ public class ServidorRunnable implements Runnable{
     private static final String BADREQUEST = "<html><head>\n<title>400 Bad Request</title>\n" +
             "</head><body>\n<h1>Bad Request</h1>\n</body></html>\n";
 
-    //Constructor para almacenar socket, direccion y puerto
+    /**
+     * Constructor para almacenar socket, direccion y puerto
+     */
 	public ServidorRunnable(Socket S){
 		this.clientSocket=S;
 	}
 
+    /**
+     * Se ejecuta al lanzar este thread
+     */
 	public void run(){
 		try{
-
-            //head section of my html file
-            //<link rel="shortcut icon" href="">
 			parser.parseRequest(clientSocket.getInputStream());
 			//Peticion incompleta
 			if(!parser.isComplete()){
@@ -56,10 +59,8 @@ public class ServidorRunnable implements Runnable{
                     if (i > 0) {
                         extension = path.substring(i+1);
                     }
-                    if(extension.equalsIgnoreCase("jpeg") || extension.equalsIgnoreCase("png")
-                            || extension.equalsIgnoreCase("gif") || extension.equalsIgnoreCase("jpg")){
-                        type = "Content-Type: " + "/image\n";
-                    }else if(extension.equalsIgnoreCase("txt")) {
+                    //Tratamiento de la extension de fichero
+                    if(extension.equalsIgnoreCase("txt")) {
                         type = "Content-Type: " + "text/plain\n";
                     }else{
                         type = "Content-Type: " + "text/html\n";
@@ -73,15 +74,13 @@ public class ServidorRunnable implements Runnable{
 					dec = new URLDecoder();
 					String descodificado = dec.decode(bodyPeticion, "UTF-8");
 
-                    //fname=nombre_fichero&content=contenido_fichero
+                    //Descomposicion del cuerpo:  fname=nombre_fichero&content=contenido_fichero
                     String[] parts = descodificado.split("&");
                     String[] p = parts[0].split("=");
                     if(parts.length>0){
                         path = "/"+p[1];
                         String[] q = parts[1].split("=");
                         bodyRespuesta = q[1];
-                        System.out.println("path: " + path);
-                        System.out.println("body fichero: " + bodyRespuesta);
                         estado = buscarFichero(path);
                     }else{
                         estado = "HTTP/1.1 404 Not Found\n";
@@ -89,16 +88,16 @@ public class ServidorRunnable implements Runnable{
                         type = "Content-Type: " + "text/html\n";
                     }
                     if(estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")){
-                        String postRespuesta = "<html><head>\n<title>¡Exito!</title>\n</head><body>" +
-                                "<h1>¡Exito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
+                        String postRespuesta = "<html><head>\n<title>&#161&Eacutexito!</title>\n</head><body>" +
+                                "<h1>&#161&Eacutexito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
                                 bodyRespuesta +  "</pre>\n</body></html>";
                         respuestaCliente(postRespuesta);
                     }else{
                         respuestaCliente(bodyRespuesta);
                     }
-
-				} else {
-                    //Metodo no aceptado
+				}
+                //Metodo no implementado
+				else {
 					estado = "HTTP/1.1 501 Not Implemented\n";
                     bodyRespuesta = NOTIMPLEMENTED;
                     type = "Content-Type: " + "text/html\n";
@@ -109,17 +108,13 @@ public class ServidorRunnable implements Runnable{
    			System.err.println(e);
    			System.exit(-1);
    		}
-   		System.out.println(estado);
-        System.out.println(path);
-        System.out.println(length);
-        System.out.println(bodyRespuesta);
 	}
 
 	/**
      * Busca en el path actual si se encuentra el fichero indicado
      * y devuelve el codigo necesario
 	 */
-	private String buscarFichero(String path){
+	private String buscarFichero(String path) throws IOException{
 		String[] subDirs = path.split("/");
 		if(subDirs.length>2){
             bodyRespuesta = FORBIDDEN;
@@ -154,7 +149,7 @@ public class ServidorRunnable implements Runnable{
      * Lee el contenido del fichero y lo devuelve
      * Devuelve null e informa del error en caso de producirse
      */
-    private static String leerFichero(String archivo){
+    private static String leerFichero(String archivo)  throws IOException{
         try {
             String cadena; String cuerpo = "";
             FileReader f = new FileReader(archivo);
@@ -166,7 +161,6 @@ public class ServidorRunnable implements Runnable{
             return cuerpo;
         }
         catch (FileNotFoundException e){System.out.println("No se ha encontrado el fichero");}
-        catch (IOException e){System.out.println("Excepcion: "+e);}
         return null;
     }
 
@@ -174,26 +168,20 @@ public class ServidorRunnable implements Runnable{
      * Crea el fichero path con el contenido body
      * Devuelve null e informa del error en caso de producirse
      */
-    private static boolean escribirFichero(String archivo){
-        try {
-            File f = new File(archivo);
-            f.createNewFile();
-            FileWriter fichero = new FileWriter(f);
-            BufferedWriter b = new BufferedWriter(fichero);
-            b.write(bodyRespuesta);
-            b.close();
-            return true;
-        }catch (IOException e){
-            System.out.println("Excepcion: "+e);
-            return false;
-        }
+    private static boolean escribirFichero(String archivo) throws IOException{
+        File f = new File(archivo);
+        f.createNewFile();
+        FileWriter fichero = new FileWriter(f);
+        BufferedWriter b = new BufferedWriter(fichero);
+        b.write(bodyRespuesta);
+        b.close();
+        return true;
     }
 
     /**
-     * Envía la respueta el cliente, tanto cabecera como cuerpo.
+     * Envía la respueta al cliente, tanto cabecera como cuerpo.
      */
     private static void respuestaCliente(String respuesta) throws IOException{
-        //Devuelve contenido al cliente
         Integer aux = respuesta.length();
         length = "Content-Length: " + aux.toString() + "\n\n";
         clientResponse = clientSocket.getOutputStream();
@@ -201,6 +189,7 @@ public class ServidorRunnable implements Runnable{
         clientResponse.write(type.getBytes());
         clientResponse.write(length.getBytes());
         clientResponse.write(respuesta.getBytes());
+        System.out.println("Ha finalizado la interaccion con el cliente con estado: "+estado);
         clientResponse.close();
     }
 }
