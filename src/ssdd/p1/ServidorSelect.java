@@ -152,22 +152,18 @@ public class ServidorSelect {
                             aux = postRespuesta.length();
                             length = "Content-Length: " + aux.toString() + "\n\n";
                             respuesta = estado+type+length+postRespuesta;
-                            System.out.println(postRespuesta);
                         }else{
                             aux = bodyRespuesta.length();
                             length = "Content-Length: " + aux.toString() + "\n\n";
                             respuesta = estado+type+length+bodyRespuesta;
                         }
-                        System.out.println(respuesta);
                         bufferSal = ByteBuffer.allocate(respuesta.length());
                         bufferSal.put(respuesta.getBytes());
                         bufferSal.flip();
                         //Asociar el buffer de salida al cliente
                         channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
                         bufferEnt.clear();
-                    }/*else{
-                        System.out.println("El bufferEnt aun tiene datos por leer1");
-                    }*/
+                    }
                     //Si la peticion no esta completa ni ha fallado, seguira leyendo en la siguiente iteracion
                     path = null; estado = null;
                 }
