@@ -86,10 +86,12 @@ public class ServidorSelect {
                         Integer aux = bodyRespuesta.length();
                         String length = "Content-Length: " + aux.toString() + "\n\n";
                         String respuesta = estado+length+bodyRespuesta;
+                        //estado = null;
                         bufferSal = ByteBuffer.allocate(respuesta.length());
                         bufferSal.put(respuesta.getBytes());
                         bufferSal.flip();
                         channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
+                        bufferEnt.clear();
                     } else if (parser.isComplete()) {
                         System.out.println("peticion completa");
                         if (parser.getMethod().equalsIgnoreCase("GET")) {
@@ -123,8 +125,6 @@ public class ServidorSelect {
                                 path = "/" + p[1];
                                 String[] q = parts[1].split("=");
                                 bodyRespuesta = q[1];
-                                System.out.println("path: " + path);
-                                System.out.println("body fichero: " + bodyRespuesta);
                                 estado = buscarFichero(path, parser);
                             } else {
                                 estado = "HTTP/1.1 404 Not Found\n";
@@ -142,7 +142,6 @@ public class ServidorSelect {
                             bodyRespuesta = NOTIMPLEMENTED;
                             type = "Content-Type: " + "text/html\n";
                         }
-
                         bufferSal.clear();
                         Integer aux = bodyRespuesta.length();
                         String length = "Content-Length: " + aux.toString() + "\n\n";
@@ -154,31 +153,24 @@ public class ServidorSelect {
                         channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
                         bufferEnt.clear();
                         System.out.println("Se ha marcado pendiente escritura");
+                    }else{
+                        System.out.println("El bufferEnt aun tiene datos por leer1");
                     }
                     System.out.println("path: " + path);
                     System.out.println("estado: " + estado);
-                    System.out.println("respuesta: " + bodyRespuesta);
-                    if (bufferEnt.hasRemaining()) {
-                        //Si aun le quedan datos,tengo que seguir leyendo?
-                        System.out.println("El bufferEnt aun tiene datos por leer");
-                    }
-                    //ver si ha recibido toda la informacion
-                    //calcular respuesta
-                    //guardar la respuesta
+                    path = null; estado = null;
                     String output = new String(bufferEnt.array()).trim();
                     System.out.println("Mensaje del cliente: " + output);
                 }
-
                 //Cliente esta preparado para leer la respuesta del servidor
                 else if (keyClient.isWritable()) {
                     SocketChannel channelClient = (SocketChannel) keyClient.channel();
                     bufferSal = (ByteBuffer) keyClient.attachment();
                     System.out.println("El cliente quiere escribir");
-                    System.out.println("respuesta: " + bodyRespuesta);
+                    System.out.println("respuestaEscritura: " + bodyRespuesta);
                     int bytes = channelClient.write(bufferSal);
                     System.out.println("Escritos "+bytes+" bytes por el canal");
                     if(bufferSal.hasRemaining()){
-                        //channelClient.close();
                         System.out.println("Queda por escribir en buffer");
                     } else{
                         channelClient.close();
