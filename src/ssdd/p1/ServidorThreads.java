@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: ServidorThreads.java
+* TIEMPO: 0.5
+* DESCRIPCIÓN: Recibe las conexiones de los clientes y lanza los threads que
+*           atienden a cada cliente.
+*/
 package ssdd.p1;
 
 import java.io.IOException;

@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: ServidorRunnable.java
+* TIEMPO: 5
+* DESCRIPCIÓN: Recibe la petición de un cliente concreto, la analiza
+*           y le devuelve su correspondiente respuesta.
+*/
 package ssdd.p1;
 
 import java.io.*;

@@ -1,3 +1,14 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: ServidorSelect.java
+* TIEMPO: 12
+* DESCRIPCIÓN: Gestiona las conexiones de los diferentes clientes recibiendo sus peticiones
+*           y enviando las respuestas utilizando un selector.
+*/
+
 package ssdd.p1;
 
 import java.io.*;

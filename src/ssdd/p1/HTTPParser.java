@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: HTTPParser.java
+* TIEMPO: 0
+* DESCRIPCIÓN: Analiza si la entrada recibida en el ByteBuffer para comprobar si es correcta y obtiene
+*           las diferentes partes de una petición HTTP.
+*/
 package ssdd.p1;
 
 import java.nio.ByteBuffer;

@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: Servidor.java
+* TIEMPO: 0.5
+* DESCRIPCIÓN: Recibe los parámetros que indican el tipo de servidor y el puerto
+*           y ejecuta el servidor adecuado.
+*/
 package ssdd.p1;
 
 import java.io.IOException;

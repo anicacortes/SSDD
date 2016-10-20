@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: BlockingHTTPParser.java
+* TIEMPO: 0
+* DESCRIPCIÓN: Analiza si la entrada recibida en el InputStream para comprobar si es correcta y obtiene
+*           las diferentes partes de una petición HTTP.
+*/
 package ssdd.p1;
 
 import java.io.InputStream;

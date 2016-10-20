@@ -1,3 +1,12 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: LineParser.java
+* TIEMPO: 0
+* DESCRIPCIÓN: Analizar las líneas que recibe en el ByteBuffer
+*/
 package ssdd.p1;
 
 import java.nio.ByteBuffer;
