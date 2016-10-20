@@ -4,10 +4,9 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -20,6 +19,8 @@ public class ServidorSelect {
     static private String bodyPeticion;
     static private String type;
     static private URLDecoder dec;
+    static private boolean primeraVez;
+
 
     private static final String FORBIDDEN = "<html><head>\n<title>403 Forbidden</title>\n" +
             "</head><body>\n<h1>Forbidden</h1>\n</body></html>\n";
@@ -41,7 +42,9 @@ public class ServidorSelect {
     public static void serverSelect() throws IOException {
         Selector selector = Selector.open();
         ByteBuffer bufferEnt = ByteBuffer.allocate(256);
-        ByteBuffer bufferSal = ByteBuffer.allocate(256);
+        ByteBuffer bufferSal = ByteBuffer.allocate(512);
+        primeraVez=true;
+        FileChannel fc = null;
 
         //Apertura del canal y configuracion no bloqueante
         ServerSocketChannel channelServer = ServerSocketChannel.open();
@@ -74,115 +77,151 @@ public class ServidorSelect {
                     //Leemos datos del cliente
                     SocketChannel channelClient = (SocketChannel) keyClient.channel();
                     HTTPParser parser = (HTTPParser) keyClient.attachment();
-                    channelClient.read(bufferEnt);
+                    int nbytes = channelClient.read(bufferEnt);
                     bufferEnt.flip();
                     parser.parseRequest(bufferEnt);
-                    //Peticion erronea, almacena resultado en el buffer
-                    if (parser.failed()) {
-                        estado = "HTTP/1.1 400 Bad Request\n";
-                        bodyRespuesta = BADREQUEST;
-                        type = "Content-Type: " + "text/html\n";
-                        bufferSal.clear();
-                        Integer aux = bodyRespuesta.length();
-                        String length = "Content-Length: " + aux.toString() + "\n\n";
-                        String respuesta = estado+length+bodyRespuesta;
-                        bufferSal = ByteBuffer.allocate(respuesta.length());
-                        bufferSal.put(respuesta.getBytes());
-                        bufferSal.flip();
-                        channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
+                    System.out.println("leidos " + nbytes + " bytes de entrada");
+                    //Si se ha completado la peticion, cambia a estado de escritura
+                    if (nbytes < 256) {
+                        channelClient.register(selector, SelectionKey.OP_WRITE, parser);
                         bufferEnt.clear();
                     }
-                    //Peticion correcta, almacena resultado en el buffer
-                    else if (parser.isComplete()) {
-                        //Peticion GET
-                        if (parser.getMethod().equalsIgnoreCase("GET")) {
-                            path = parser.getPath();
-                            estado = buscarFichero(path, parser);
-                            String extension = "";
-                            int i = path.lastIndexOf('.');
-                            if (i > 0) {
-                                extension = path.substring(i + 1);
-                            }
-                            //Gestion de extension del fichero
-                            if (extension.equalsIgnoreCase("txt")) {
-                                type = "Content-Type: " + "text/plain\n";
-                            } else {
-                                type = "Content-Type: " + "text/html\n";
-                            }
-                        }
-                        //Peticion tipo POST
-                        else if (parser.getMethod().equalsIgnoreCase("POST")) {
-                            type = "Content-Type: " + "text/html\n";
-                            bodyPeticion = new String(parser.getBody().array(), "UTF-8");
-                            dec = new URLDecoder();
-                            String descodificado = dec.decode(bodyPeticion, "UTF-8");
-
-                            //Descomposicion del cuerpo:  fname=nombre_fichero&content=contenido_fichero
-                            String[] parts = descodificado.split("&");
-                            String[] p = parts[0].split("=");
-                            if (parts.length > 0) {
-                                path = "/" + p[1];
-                                String[] q = parts[1].split("=");
-                                bodyRespuesta = q[1];
-                                estado = buscarFichero(path, parser);
-                            } else {
-                                estado = "HTTP/1.1 404 Not Found\n";
-                                bodyRespuesta = NOTFOUND;
-                                type = "Content-Type: " + "text/html\n";
-                            }
-                           /* if (estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")) {
-                                String postRespuesta = "<html><head>\n<title>&#161&Eacutexito!</title>\n</head><body>" +
-                                        "<h1>&#161&Eacutexito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
-                                        bodyRespuesta + "</pre>\n</body></html>";
-                            }*/
-                        } else {
-                            //Metodo no aceptado
-                            estado = "HTTP/1.1 501 Not Implemented\n";
-                            bodyRespuesta = NOTIMPLEMENTED;
-                            type = "Content-Type: " + "text/html\n";
-                        }
-                        bufferSal.clear();
-                        Integer aux = bodyRespuesta.length();
-                        String length = "Content-Length: " + aux.toString() + "\n\n";
-                        String respuesta = "";
-                        if(estado.equalsIgnoreCase("HTTP/1.1 200 OK\n") && parser.getMethod().equalsIgnoreCase("POST")){
-                            String postRespuesta = "<html><head>\n<title>&#161&Eacutexito!</title>\n</head><body>" +
-                                    "<h1>&#161&Eacutexito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>" +
-                                    bodyRespuesta + "</pre>\n</body></html>";
-                            aux = postRespuesta.length();
-                            length = "Content-Length: " + aux.toString() + "\n\n";
-                            respuesta = estado+type+length+postRespuesta;
-                        }else{
-                            aux = bodyRespuesta.length();
-                            length = "Content-Length: " + aux.toString() + "\n\n";
-                            respuesta = estado+type+length+bodyRespuesta;
-                        }
-                        bufferSal = ByteBuffer.allocate(respuesta.length());
-                        bufferSal.put(respuesta.getBytes());
-                        bufferSal.flip();
-                        //Asociar el buffer de salida al cliente
-                        channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
-                        bufferEnt.clear();
-                    }
-                    //Si la peticion no esta completa ni ha fallado, seguira leyendo en la siguiente iteracion
-                    path = null; estado = null;
+                    //Si la peticion no esta completa, seguira leyendo en la siguiente iteracion
+                    //path = null; estado = null;
                 }
 
                 //Cliente esta preparado para leer la respuesta del servidor
                 else if (keyClient.isWritable()) {
-                    SocketChannel channelClient = (SocketChannel) keyClient.channel();
-                    bufferSal = (ByteBuffer) keyClient.attachment();
-                    channelClient.write(bufferSal);
-                    if(!bufferSal.hasRemaining()){
-                        System.out.println("Ha finalizado la interaccion con el cliente");
-                        channelClient.close();
+                    System.out.println("Entro a escribir");
+                    if (primeraVez) {
+                        System.out.println("ES primera vez");
+                        HTTPParser parser = (HTTPParser) keyClient.attachment();
+                        //Peticion erronea, almacena resultado en el buffer
+                        if (parser.failed() || !parser.isComplete()) {
+                            primeraVez = false;
+                            estado = "HTTP/1.1 400 Bad Request\n";
+                            bodyRespuesta = BADREQUEST;
+                            type = "Content-Type: " + "text/html\n";
+                            //bufferSal.clear();
+                            Integer aux = bodyRespuesta.length();
+                            String length = "Content-Length: " + aux.toString() + "\n\n";
+                            String respuesta = estado + type + length + bodyRespuesta;
+                        /*bufferSal = ByteBuffer.allocate(respuesta.length());
+                        bufferSal.put(respuesta.getBytes());
+                        bufferSal.flip();
+                        channelClient.register(selector, SelectionKey.OP_WRITE, bufferSal);
+                        bufferEnt.clear();*/
+                        }
+                        //Peticion correcta, almacena resultado en el buffer
+                        else if (parser.isComplete()) {
+                            System.out.println("La peticion esta completa");
+                            primeraVez = false;
+                            //Peticion GET
+                            if (parser.getMethod().equalsIgnoreCase("GET")) {
+                                path = parser.getPath();
+                                estado = buscarFichero(path, parser);
+                                String extension = "";
+                                int i = path.lastIndexOf('.');
+                                if (i > 0) {
+                                    extension = path.substring(i + 1);
+                                }
+                                //Gestion de extension del fichero
+                                if (extension.equalsIgnoreCase("txt")) {
+                                    type = "Content-Type: " + "text/plain\n";
+                                } else {
+                                    type = "Content-Type: " + "text/html\n";
+                                }
+                            }
+                            //Peticion tipo POST
+                            else if (parser.getMethod().equalsIgnoreCase("POST")) {
+                                type = "Content-Type: " + "text/html\n";
+                                bodyPeticion = new String(parser.getBody().array(), "UTF-8");
+                                dec = new URLDecoder();
+                                String descodificado = dec.decode(bodyPeticion, "UTF-8");
+
+                                //Descomposicion del cuerpo:  fname=nombre_fichero&content=contenido_fichero
+                                String[] parts = descodificado.split("&");
+                                String[] p = parts[0].split("=");
+                                if (parts.length > 0) {
+                                    path = "/" + p[1];
+                                    String[] q = parts[1].split("=");
+                                    bodyRespuesta = q[1];
+                                    estado = buscarFichero(path, parser);
+                                } else {
+                                    estado = "HTTP/1.1 404 Not Found\n";
+                                    bodyRespuesta = NOTFOUND;
+                                    type = "Content-Type: " + "text/html\n";
+                                }
+
+                            } else {
+                                //Metodo no aceptado
+                                estado = "HTTP/1.1 501 Not Implemented\n";
+                                bodyRespuesta = NOTIMPLEMENTED;
+                                type = "Content-Type: " + "text/html\n";
+                            }
+                            String respuesta = "";
+                            Long aux;
+                            String length = "";
+                            SocketChannel channelClient = (SocketChannel) keyClient.channel();
+                            Path pathFc = Paths.get(System.getProperty("user.dir") + path);
+
+                            if (estado.equalsIgnoreCase("HTTP/1.1 200 OK\n")) {
+                                System.out.println("OK Mando contenido fichero");
+                                String postRespuesta = "";
+                                if (parser.getMethod().equalsIgnoreCase("POST")) {
+                                    postRespuesta = "<html><head>\n<title>&#161&Eacutexito!</title>\n</head><body>" +
+                                            "<h1>&#161&Eacutexito!</h1>\n<p>Se ha escrito lo siguiente en el fichero " + path + ":</p>\n<pre>";
+                                }
+                                fc = FileChannel.open(pathFc);
+                                aux = fc.size();
+                                length = "Content-Length: " + aux.toString() + "\n\n";
+                                respuesta = estado + type + length + postRespuesta;
+                                System.out.println("Bytes q oucpa la respuesta: " + respuesta.getBytes().length);
+                                bufferSal.clear();
+                                bufferSal.allocate(respuesta.length()*2);
+                                bufferSal.put(respuesta.getBytes());
+                                bufferSal.flip();
+                                channelClient.write(bufferSal);
+                            } else {
+                                System.out.println("Mala peticion");
+                                aux = (long) bodyRespuesta.length();
+                                length = "Content-Length: " + aux.toString() + "\n\n";
+                                respuesta = estado + type + length + bodyRespuesta;
+                                bufferSal.clear();
+                                bufferSal.put(respuesta.getBytes());
+                                bufferSal.flip();
+                                channelClient.write(bufferSal);
+                                System.out.println("Ha finalizado la interaccion con el cliente");
+                                channelClient.close();
+                                primeraVez = true;
+                            }
+                        }
+                    } else {
+                        System.out.println("NO primera vez");
+                        SocketChannel channelClient = (SocketChannel) keyClient.channel();
+                        HTTPParser parser = (HTTPParser) keyClient.attachment();
+                        int nbytes = fc.read(bufferSal);
+                        System.out.println("bytes enviados: " + nbytes);
+                        channelClient.write(bufferSal);
+                        if (nbytes < 512) {
+                            if (parser.getMethod().equalsIgnoreCase("POST")) {
+                                bufferSal.clear();
+                                String respuesta = "</pre>\n</body></html>";
+                                bufferSal.put(respuesta.getBytes());
+                                bufferSal.flip();
+                                channelClient.write(bufferSal);
+                            }
+                            fc.close();
+                            primeraVez = true;
+                            System.out.println("Ha finalizado la interaccion con el cliente");
+                            channelClient.close();
+                        }
                     }
                 }
             }
-            //Borramos las claves seleccionados porque ya se han tratado
-            selectedKeys.clear();
         }
     }
+
 
     /**
      * Busca en el path actual si se encuentra el fichero indicado
@@ -202,7 +241,7 @@ public class ServidorSelect {
             if (parser.getMethod().equalsIgnoreCase("GET")) {
                 File dir = new File(p);
                 if (dir.exists()) {
-                    bodyRespuesta = leerFichero(p);
+//                    bodyRespuesta = leerFichero(p);
                     return "HTTP/1.1 200 OK\n";
                 } else {
                     bodyRespuesta = NOTFOUND;
