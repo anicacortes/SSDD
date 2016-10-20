@@ -76,13 +76,19 @@ public class ServidorSelect {
                 else if (keyClient.isReadable()) {
                     //Leemos datos del cliente
                     SocketChannel channelClient = (SocketChannel) keyClient.channel();
-                    HTTPParser parser = (HTTPParser) keyClient.attachment();
                     int nbytes = channelClient.read(bufferEnt);
                     bufferEnt.flip();
-                    parser.parseRequest(bufferEnt);
+                    //parser.parseRequest(bufferEnt);
                     System.out.println("leidos " + nbytes + " bytes de entrada");
+
+                    System.out.print("Buffer contents: ");
+                    while (bufferEnt.hasRemaining()) {
+                        System.out.print((char) bufferEnt.get());
+                    }
+
                     //Si se ha completado la peticion, cambia a estado de escritura
-                    if (nbytes < 256) {
+                    if (nbytes == -1) {
+                        HTTPParser parser = (HTTPParser) keyClient.attachment();
                         channelClient.register(selector, SelectionKey.OP_WRITE, parser);
                         bufferEnt.clear();
                     }
@@ -176,12 +182,29 @@ public class ServidorSelect {
                                 aux = fc.size();
                                 length = "Content-Length: " + aux.toString() + "\n\n";
                                 respuesta = estado + type + length + postRespuesta;
+                                System.out.println("respueta: "+respuesta);
                                 System.out.println("Bytes q oucpa la respuesta: " + respuesta.getBytes().length);
                                 bufferSal.clear();
                                 bufferSal.allocate(respuesta.length()*2);
                                 bufferSal.put(respuesta.getBytes());
                                 bufferSal.flip();
                                 channelClient.write(bufferSal);
+
+                                bufferSal = ByteBuffer.allocate(80);
+                                int nbytes = fc.read(bufferSal);
+                                System.out.println("bytes enviados: " + nbytes);
+                                bufferSal.flip();
+                                System.out.print("Buffer contents: ");
+                                while (bufferSal.hasRemaining()) {
+                                    System.out.print((char) bufferSal.get());
+                                }
+                                System.out.println("acabado");
+                                channelClient.write(bufferSal);
+                                fc.close();
+                                bufferSal.clear();
+                                channelClient.close();;
+                                primeraVez=true;
+
                             } else {
                                 System.out.println("Mala peticion");
                                 aux = (long) bodyRespuesta.length();
@@ -198,12 +221,35 @@ public class ServidorSelect {
                         }
                     } else {
                         System.out.println("NO primera vez");
+
+                        /*ByteBuffer buffer = ByteBuffer.allocate(50);
+                        int noOfBytesRead = fc.read(buffer);
+                        while (noOfBytesRead != -1) {
+                            System.out.println("Number of bytes read: " + noOfBytesRead);
+                            buffer.flip();
+                            System.out.print("Buffer contents: ");
+                            while (buffer.hasRemaining()) {
+                                System.out.print((char) buffer.get());
+                            }
+                            System.out.println(" ");
+                            buffer.clear();
+                            noOfBytesRead = fc.read(buffer);
+                        }
+                        primeraVez = true;*/
+
                         SocketChannel channelClient = (SocketChannel) keyClient.channel();
                         HTTPParser parser = (HTTPParser) keyClient.attachment();
+                        bufferSal = ByteBuffer.allocate(50);
                         int nbytes = fc.read(bufferSal);
                         System.out.println("bytes enviados: " + nbytes);
+                        bufferSal.flip();
+                        System.out.print("Buffer contents: ");
+                        while (bufferSal.hasRemaining()) {
+                            System.out.print((char) bufferSal.get());
+                        }
                         channelClient.write(bufferSal);
-                        if (nbytes < 512) {
+                        bufferSal.clear();
+                        if (nbytes == -1) {
                             if (parser.getMethod().equalsIgnoreCase("POST")) {
                                 bufferSal.clear();
                                 String respuesta = "</pre>\n</body></html>";
