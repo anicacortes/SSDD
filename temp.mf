@@ -1,4 +1,0 @@
-Main-Class: ssdd.p1.Servidor
-Manifest-Version: 1.0
-Created-By: 1.7.0_101 (Oracle Corporation)
-
