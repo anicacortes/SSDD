@@ -1,5 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: WorkerFactoryServer.java
+* TIEMPO: 1h
+* DESCRIPCIÓN: Servidor de asignación que devuelve los n servidores de calculo al cliente, si hay suficientes.
+*/
 package ssdd.p2;
-
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -22,12 +30,17 @@ public class WorkerFactoryServer implements WorkerFactory{
     public WorkerFactoryServer() { //necesario?
     }
 
+    /**
+     * Registra en el registroRMI el servidor de asignación que se lanza
+     */
     public void registrar () {
         try{
-            Registry registry = LocateRegistry.getRegistry(IP);
+            LocateRegistry.createRegistry(2001);
+            Registry registry = LocateRegistry.getRegistry(IP,2001);
             WorkerFactory w = new WorkerFactoryServer();
             WorkerFactory stub = (WorkerFactory) UnicastRemoteObject.exportObject(w, 0); //PUERTO DE RMI?
             registry.bind("WorkerFactoryServer", stub);
+            System.out.println("se ha registrado workerfactoryserver");
 
         } catch (RemoteException re) {
             System.out.println();
@@ -37,30 +50,35 @@ public class WorkerFactoryServer implements WorkerFactory{
         }
     }
 
+    /**
+     * Devuelve n servidores de calculo si estan en ejecucion.
+     * En caso contrario devuelve null y un mensaje que indica que no hay tantos
+     * servidores en ejecución
+     */
     public ArrayList<Worker> dameWorkers (int n) throws RemoteException {
         ArrayList<Worker> listWorkers = null;
         try {
-
-            Registry registry = LocateRegistry.getRegistry(IP);
+            Registry registry = LocateRegistry.getRegistry(IP,2001);
             if (registry.list().length - 1 < n) {
-                System.out.println("No hay suficientes workers lanzados");
                 return null;
             }
             else {
-                String[] listNames = registry.list();
-                for (int i = 0; i < n; i++) {
+                String[] listNames = registry.list();   //guarda workers registrados
+                int i=0; int added = 0;
+                while(i<n && added < n){
                     if (!listNames[i].contains("Factory")) {
                         Worker stub = (Worker) registry.lookup(listNames[i]);
+                        listWorkers.add(stub);
+                        added++;
                     }
+                    i++;
                 }
-                //listWorkers.add();
                 return listWorkers;
-
             }
         }
         catch (NotBoundException e) {
-
+            System.out.println("Excepcion: "+e);
+            return null;
         }
-        return listWorkers;
     }
 }
