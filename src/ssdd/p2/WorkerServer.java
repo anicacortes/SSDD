@@ -19,52 +19,65 @@ import java.util.ArrayList;
 /**
  * Servidor de calculo
  */
-public class WorkerServer implements Worker{
+public class WorkerServer implements Worker {
     String IP;
     int contador = 0;
 
     public WorkerServer(String IP) {
         this.IP = IP;
     }
-    public WorkerServer() {    }
+
+    public WorkerServer() {
+    }
 
     /**
      * Registra en el registroRMI el servidor de calculo que se lanza
      */
-    public void registrar () {
-        try{
-            Registry registry = LocateRegistry.getRegistry(IP,2001);
+    public void registrar() {
+        try {
+            Registry registry = LocateRegistry.getRegistry(IP, 2001);
             Worker w = new WorkerServer();
             Worker stub = (Worker) UnicastRemoteObject.exportObject(w, 0);
             String[] listNames = registry.list();
-            contador = listNames.length+1;
+            contador = listNames.length + 1;
             String name = "WorkerServer" + contador;
-            registry.bind(name, stub);
+            registry.rebind(name, stub);
             System.out.println("se ha registrado workerserver");
         } catch (RemoteException re) {
             System.out.println();
         }
-        catch (AlreadyBoundException e) {
+        /*catch (AlreadyBoundException e) {
 
-        }
+        }*/
     }
 
     /**
      * Devuelve los primos que se encuentran en el intervalo min-max
      */
     public ArrayList<Integer> encuentraPrimos(int min, int max) {
-        ArrayList<Integer> primos = null;
-        if (min<=2) {
+        ArrayList<Integer> primos = new ArrayList<>();
+        boolean esPrimo = false;
+        System.out.println("min " + min + " y max " + max);
+        if (min <= 2) {
             primos.add(2);
-            min=3;
+            min = 3;
         }
-        for(int i=min; i<=max; i++){
-            for(int j = 2; j*j <=i; i+=2){
-                if(i % j != 0){
-                    primos.add(i);
-                }
+        for (int i = min; i <= max; i++) {
+            if (esPrimo(i)) {
+                primos.add(i);
+                System.out.println("Añadido primo: " + i);
             }
         }
+        System.out.println("He terminado la busqueda de primos con min " + min + " y max " + max);
         return primos;
+    }
+
+    private boolean esPrimo(int i) {
+        for (int j = 2; j * j <= i; j++) {
+            if ((i % j) == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 }

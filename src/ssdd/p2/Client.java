@@ -13,6 +13,9 @@ package ssdd.p2;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class Client {
     private int min;
@@ -44,21 +47,23 @@ public class Client {
                     //fin
                 }
                 else{
+                    System.out.println("antes de dividir, se han encontrado los workers");
                     Balancer b = new Balancer(min,max,n); //Dividira la carga
                     ArrayList<Thread> t = new ArrayList<>();
                     int i=0;
                     while (i<n){
+                        System.out.println("Lanzamos thread " + i);
                         t.add(new Thread(new ClientRunnable(b,listWorkers.get(i),i)));
-                        t.get(t.size()-1);
+                        t.get(i).start();
+                        i++;
                     }
 
-                    int cores = Runtime.getRuntime().availableProcessors();
-                    System.out.println("Cores: "+cores);
                     for(int j=0; j<t.size();j++){
                         t.get(j).join();
                     }
 
                     ArrayList<Integer> primos = b.getPrimos();
+                    Collections.sort(primos);   //Ordenar la lista
                     System.out.println("Lista de primos en el intervalo: ");
                     for(int j = 0; j<primos.size(); j++){
                         System.out.printf(primos.get(j)+", ");

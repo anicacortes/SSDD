@@ -39,15 +39,15 @@ public class WorkerFactoryServer implements WorkerFactory{
             Registry registry = LocateRegistry.getRegistry(IP,2001);
             WorkerFactory w = new WorkerFactoryServer();
             WorkerFactory stub = (WorkerFactory) UnicastRemoteObject.exportObject(w, 0); //PUERTO DE RMI?
-            registry.bind("WorkerFactoryServer", stub);
+            registry.rebind("WorkerFactoryServer", stub);
             System.out.println("se ha registrado workerfactoryserver");
 
         } catch (RemoteException re) {
             System.out.println();
         }
-        catch (AlreadyBoundException e) {
+        /*catch (AlreadyBoundException e) {
 
-        }
+        }*/
     }
 
     /**
@@ -56,7 +56,7 @@ public class WorkerFactoryServer implements WorkerFactory{
      * servidores en ejecución
      */
     public ArrayList<Worker> dameWorkers (int n) throws RemoteException {
-        ArrayList<Worker> listWorkers = null;
+        ArrayList<Worker> listWorkers = new ArrayList<>();
         try {
             Registry registry = LocateRegistry.getRegistry(IP,2001);
             if (registry.list().length - 1 < n) {
@@ -65,8 +65,9 @@ public class WorkerFactoryServer implements WorkerFactory{
             else {
                 String[] listNames = registry.list();   //guarda workers registrados
                 int i=0; int added = 0;
-                while(i<n && added < n){
+                while(i<=n && added < n){
                     if (!listNames[i].contains("Factory")) {
+                        System.out.println("nombreWorker: "+listNames[i]);
                         Worker stub = (Worker) registry.lookup(listNames[i]);
                         listWorkers.add(stub);
                         added++;

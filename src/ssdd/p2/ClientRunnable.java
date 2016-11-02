@@ -27,6 +27,7 @@ public class ClientRunnable implements Runnable{
     public void run(){
         try {
             //Si queda rangos por calcular, sigue calculando primos en subintervalos
+            System.out.println("Empiezo a mandar tareas");
             while (b.quedaTrabajo()){
                 int[] rango = b.dividirTrabajo();
                 System.out.println("Soy el cliente "+client+" y voy a calcular el intervalo "+rango[0]+" - "+rango[1]);
