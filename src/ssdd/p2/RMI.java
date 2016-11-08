@@ -35,7 +35,7 @@ public class RMI {
                     IP = args[1];
                 }
 
-                WorkerFactoryServer wfs = new WorkerFactoryServer();
+                WorkerFactoryServer wfs = new WorkerFactoryServer(IP);
                 wfs.registrar();
                 break;
 

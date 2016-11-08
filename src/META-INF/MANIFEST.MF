@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Class-Path: C:\Users\anago\Documents\GitHub\SSDD\out\artifacts\p2\p2.j
+ ar
+Main-Class: ssdd.p2.RMI
+
