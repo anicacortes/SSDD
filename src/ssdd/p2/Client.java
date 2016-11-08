@@ -38,7 +38,7 @@ public class Client {
      */
     public void interaccion() {
             try {
-                Registry registry = LocateRegistry.getRegistry(IP);
+                Registry registry = LocateRegistry.getRegistry(IP,2001);
                 WorkerFactory stub = (WorkerFactory) registry.lookup("WorkerFactoryServer");
 
                 ArrayList<Worker> listWorkers = stub.dameWorkers(n);
