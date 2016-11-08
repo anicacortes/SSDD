@@ -33,7 +33,7 @@ public class WorkerServer implements Worker{
      */
     public void registrar () {
         try{
-            Registry registry = LocateRegistry.getRegistry(IP,2001);
+            Registry registry = LocateRegistry.getRegistry(IP);
             Worker w = new WorkerServer();
             Worker stub = (Worker) UnicastRemoteObject.exportObject(w, 0);
             String[] listNames = registry.list();

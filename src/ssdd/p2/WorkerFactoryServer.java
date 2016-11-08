@@ -35,8 +35,8 @@ public class WorkerFactoryServer implements WorkerFactory{
      */
     public void registrar () {
         try{
-            LocateRegistry.createRegistry(2001);
-            Registry registry = LocateRegistry.getRegistry(IP,2001);
+            //LocateRegistry.createRegistry(2001);
+            Registry registry = LocateRegistry.getRegistry(IP);
             WorkerFactory w = new WorkerFactoryServer();
             WorkerFactory stub = (WorkerFactory) UnicastRemoteObject.exportObject(w, 0); //PUERTO DE RMI?
             registry.bind("WorkerFactoryServer", stub);
@@ -58,7 +58,7 @@ public class WorkerFactoryServer implements WorkerFactory{
     public ArrayList<Worker> dameWorkers (int n) throws RemoteException {
         ArrayList<Worker> listWorkers = null;
         try {
-            Registry registry = LocateRegistry.getRegistry(IP,2001);
+            Registry registry = LocateRegistry.getRegistry(IP);
             if (registry.list().length - 1 < n) {
                 return null;
             }

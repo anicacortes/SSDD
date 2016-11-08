@@ -49,7 +49,7 @@ public class Balancer {
      * Añade los elementos de p que son los primos de un subintervalo
      * a la lista que contiene todos los primos
      */
-    public synchronized void añadirPrimos(ArrayList<Integer> p) {
+    public synchronized void anadirPrimos(ArrayList<Integer> p) {
         primos.addAll(p);
     }
 }
