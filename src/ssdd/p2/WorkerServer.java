@@ -39,32 +39,39 @@ public class WorkerServer implements Worker{
             String[] listNames = registry.list();
             contador = listNames.length+1;
             String name = "WorkerServer" + contador;
-            registry.bind(name, stub);
-            System.out.println("se ha registrado workerserver");
+            registry.rebind(name, stub);
         } catch (RemoteException re) {
-            System.out.println();
+            System.out.println(re);
         }
-        catch (AlreadyBoundException e) {
-
-        }
+        /*catch (AlreadyBoundException e) {
+            System.out.println(e);
+        }*/
     }
 
     /**
      * Devuelve los primos que se encuentran en el intervalo min-max
      */
     public ArrayList<Integer> encuentraPrimos(int min, int max) {
-        ArrayList<Integer> primos = null;
-        if (min<=2) {
+        ArrayList<Integer> primos = new ArrayList<>();
+        if (min <= 2) {
             primos.add(2);
-            min=3;
+            min = 3;
         }
-        for(int i=min; i<=max; i++){
-            for(int j = 2; j*j <=i; i+=2){
-                if(i % j != 0){
-                    primos.add(i);
-                }
+        for (int i = min; i <= max; i++) {
+            if (esPrimo(i)) {
+                primos.add(i);
             }
         }
+        System.out.println("He terminado la busqueda de primos con min " + min + " y max " + max);
         return primos;
+    }
+
+    private boolean esPrimo(int i) {
+        for (int j = 2; j * j <= i; j++) {
+            if ((i % j) == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -19,7 +19,6 @@ public class RMI {
         //Si no tiene IP, se pone por defecto
         String IP = "localhost";
         tipo = args[0];
-        System.out.printf("opcion: "+args[0]);
         switch (tipo) {
             //Lanza WorkerServer
             case "-c":

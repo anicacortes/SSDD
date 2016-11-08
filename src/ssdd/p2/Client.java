@@ -47,12 +47,10 @@ public class Client {
                     //fin
                 }
                 else{
-                    System.out.println("antes de dividir, se han encontrado los workers");
                     Balancer b = new Balancer(min,max,n); //Dividira la carga
                     ArrayList<Thread> t = new ArrayList<>();
                     int i=0;
                     while (i<n){
-                        System.out.println("Lanzamos thread " + i);
                         t.add(new Thread(new ClientRunnable(b,listWorkers.get(i),i)));
                         t.get(i).start();
                         i++;
