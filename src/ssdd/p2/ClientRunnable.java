@@ -5,7 +5,8 @@
 * NIA: 683546
 * FICHERO: RMI.java
 * TIEMPO: 1h
-* DESCRIPCIÓN: Thread que ejecuta la llamada para encontrar los primos en un subintervalo mientras queda trabajo pendiente.
+* DESCRIPCIÓN: Thread que ejecuta la llamada para encontrar los primos en un subintervalo mientras queda trabajo pendiente
+*           y calcula el tiempo de coste del calculo.
 */
 package ssdd.p2;
 

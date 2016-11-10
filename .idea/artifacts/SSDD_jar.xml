@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SSDD:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SSDD_jar</output-path>
+    <root id="archive" name="SSDD.jar">
+      <element id="module-output" name="SSDD" />
+    </root>
+  </artifact>
+</component>

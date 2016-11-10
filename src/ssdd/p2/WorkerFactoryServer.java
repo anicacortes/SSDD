@@ -9,7 +9,6 @@
 */
 package ssdd.p2;
 
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -27,7 +26,7 @@ public class WorkerFactoryServer implements WorkerFactory{
     public WorkerFactoryServer(String IP) {
         this.IP = IP;
     }
-    public WorkerFactoryServer() { //necesario?
+    public WorkerFactoryServer() {
     }
 
     /**
@@ -38,15 +37,12 @@ public class WorkerFactoryServer implements WorkerFactory{
             LocateRegistry.createRegistry(2001);
             Registry registry = LocateRegistry.getRegistry(IP,2001);
             WorkerFactory w = new WorkerFactoryServer();
-            WorkerFactory stub = (WorkerFactory) UnicastRemoteObject.exportObject(w, 0); //PUERTO DE RMI?
+            WorkerFactory stub = (WorkerFactory) UnicastRemoteObject.exportObject(w, 0);
             registry.rebind("WorkerFactoryServer", stub);
 
         } catch (RemoteException re) {
             System.out.println(re);
         }
-        /*catch (AlreadyBoundException e) {
-
-        }*/
     }
 
     /**

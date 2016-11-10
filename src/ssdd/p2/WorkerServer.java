@@ -9,16 +9,12 @@
 */
 package ssdd.p2;
 
-import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 
-/**
- * Servidor de calculo
- */
 public class WorkerServer implements Worker{
     String IP;
     int contador = 0;
@@ -43,9 +39,6 @@ public class WorkerServer implements Worker{
         } catch (RemoteException re) {
             System.out.println(re);
         }
-        /*catch (AlreadyBoundException e) {
-            System.out.println(e);
-        }*/
     }
 
     /**

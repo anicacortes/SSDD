@@ -26,14 +26,25 @@ public class Balancer {
         this.nWorkers = n;
     }
 
+    /**
+     * Devuelve la lista de primos que se han calculado
+     */
     public synchronized ArrayList<Integer> getPrimos() {
         return primos;
     }
 
+    /**
+     * Devuelve true si quedan intervalo de numeros por calcular
+     * Devuelve false en caso contrario.
+     */
     public synchronized boolean quedaTrabajo() {
         return min<max;
     }
 
+    /**
+     * Devuelve una lista con minimo y maximo del subintervalo que
+     * va a calcular el cliente
+     */
     public synchronized int[] dividirTrabajo(){
         int[] rango = new int[2];
         while(((max-min)/nWorkers)<factor){

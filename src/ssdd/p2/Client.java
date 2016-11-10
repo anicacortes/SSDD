@@ -44,7 +44,6 @@ public class Client {
                 ArrayList<Worker> listWorkers = stub.dameWorkers(n);
                 if(listWorkers == null){
                     System.out.println("No hay suficientes workers");
-                    //fin
                 }
                 else{
                     Balancer b = new Balancer(min,max,n); //Dividira la carga
