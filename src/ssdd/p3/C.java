@@ -1,5 +1,9 @@
 package ssdd.p3;
 
+import ssdd.ms.Envelope;
+import ssdd.ms.MessageSystem;
+import ssdd.ms.MessageValue;
+
 import java.io.FileNotFoundException;
 
 //import ssdd.ms.Envelope;
@@ -11,7 +15,7 @@ public class C {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		boolean debug = false;
+		boolean debug = true;
 		String networkFile = "peers.txt";
 		
 		for (String arg : args) {

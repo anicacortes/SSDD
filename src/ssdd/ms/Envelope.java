@@ -15,6 +15,16 @@ public class Envelope implements Serializable {
 	}
 	
 	public int getSource() { return source; }
+
 	public int getDestination() { return destination; }
 	public Serializable getPayload() { return payload; }
+
+	@Override
+	public String toString() {
+		return "Envelope{" +
+				"source=" + source +
+				", destination=" + destination +
+				", payload=" + payload +
+				'}';
+	}
 }

@@ -1,17 +1,15 @@
 package ssdd.ms;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class MessageSystem {
 	private int pid;
 	private boolean showDebugMsgs;
-	private ArrayList<PeerAddress> addresses = new ArrayList<PeerAddress>();
+	private ArrayList<PeerAddress> addresses = new ArrayList<PeerAddress>();		//lista de @ip-puerto del resto de procesos
 	private MailBox mailbox;
 
 	public MessageSystem(int source, String networkFile, boolean debug) throws FileNotFoundException {
@@ -26,22 +24,30 @@ public class MessageSystem {
 		if (showDebugMsgs)
 			System.out.println("Sending " + message.toString() + " from " + pid + " to " + dst);
 		try {
-			// TO DO
+			Envelope e = new Envelope(pid,dst,message); //crea mensaje
+            PeerAddress p = addresses.get(dst-1);         //obtener ip-puerto
+            Socket s = p.connect();
+            ObjectOutputStream msg = new ObjectOutputStream(s.getOutputStream());
+            msg.writeObject(e);
+            msg.close();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Envelope receive() {
-		// TO DO
-        return null;
+        return mailbox.getNextMessage();
 	}
 	
 	public void stopMailbox() {
-		// TO DO
-	}
+        try {
+            mailbox.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
 	private int loadPeerAddresses(String networkFile) throws FileNotFoundException {
 		BufferedReader in = new BufferedReader(new FileReader(networkFile));
@@ -57,8 +63,9 @@ public class MessageSystem {
 							line.substring(0, sep),
 							Integer.parseInt(line.substring(sep + 1))));
 					if (n == pid) {
-						port = addresses.lastElement().port;
-					}
+                        port = addresses.get(addresses.size()-1).port;
+                        System.out.println("port cogido: "+port+ "n: "+n);
+                    }
 				}
 			}
 		} catch (IOException e) {
