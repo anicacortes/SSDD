@@ -1,7 +1,9 @@
 package ssdd.p3;
 
+import ssdd.ms.Envelope;
 import ssdd.ms.MessageSystem;
 import ssdd.ms.MessageValue;
+import sun.util.resources.cldr.as.LocaleNames_as;
 
 import java.io.FileNotFoundException;
 
@@ -9,27 +11,33 @@ import java.io.FileNotFoundException;
 
 public class B {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		boolean debug = true;
-		String networkFile = "peers.txt";
-		
-		for (String arg : args) {
-			if (arg.equals("-d"))
-				debug = true;
-			else
-				networkFile = arg;
-		}
-		
-		try {
-			MessageSystem ms = new MessageSystem(2, networkFile, debug);
-			ms.send(3, new MessageValue(2));
+	private  boolean debug;
+	private  int idP;
+	private  String fichero;
+
+	public B(boolean debug, int idP, String fichero) {
+		this.debug = debug;
+		this.idP = idP;
+		this.fichero = fichero;
+	}
+
+	public void lanzarEjecucion() throws FileNotFoundException{
+
+            String mensaje = "Y ya lo sé, otra vez ha sucedido, \n" +
+                    "volaron los manteles y el domingo se hizo especial. \n" +
+                    "Flotaba en azoteas todo mi deseo, \n" +
+                    "un solecito bueno y tus faldas al viento, \n" +
+                    "nada más...";
+			MessageSystem ms = new MessageSystem(idP, fichero, debug);
+			ms.send(1, new MessageValue(mensaje));
+
+            String valor;
+            Envelope e;
+            e = ms.receive();
+            valor = ((MessageValue)e.getPayload()).getValue();
+            System.out.println("Soy proceso " + idP + "y recibo: " + valor);
+            ms.send(1,"Soy proceso " + idP + "y me voy");
 			ms.stopMailbox();
-		} catch (FileNotFoundException e) {
-			System.err.println("El fichero " + networkFile + " no existe.");
-		}
 	}
 
 }

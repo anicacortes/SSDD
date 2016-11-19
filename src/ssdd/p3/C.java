@@ -11,33 +11,33 @@ import java.io.FileNotFoundException;
 
 public class C {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		boolean debug = true;
-		String networkFile = "peers.txt";
-		
-		for (String arg : args) {
-			if (arg.equals("-d"))
-				debug = true;
-			else
-				networkFile = arg;
-		}
-		
-		try {
-			MessageSystem ms = new MessageSystem(3, networkFile, debug);
-			int valor;
-			Envelope e;
-			e = ms.receive();
-			valor = ((MessageValue)e.getPayload()).getValue();
-			e = ms.receive();
-			valor = ((MessageValue)e.getPayload()).getValue();
-			System.out.println("El valor almacenado finalemente es " + valor);
-			ms.stopMailbox();
-		} catch (FileNotFoundException e) {
-			System.err.println("El fichero " + networkFile + " no existe.");
-		}
+	private  boolean debug;
+	private  int idP;
+	private  String fichero;
+
+	public C(boolean debug, int idP, String fichero) {
+		this.debug = debug;
+		this.idP = idP;
+		this.fichero = fichero;
+	}
+
+	public void lanzarEjecucion() throws FileNotFoundException{
+
+            String mensaje = "Si tu magia ya no me hace efecto, \n" +
+                    "¿cómo voy a continuar? \n" +
+                    "Si me sueltas entre tanto viento, \n" +
+                    "¿cómo voy a continuar?, \n" +
+                    "¿cómo voy a continuar?";
+			MessageSystem ms = new MessageSystem(idP, fichero, debug);
+            ms.send(1, new MessageValue(mensaje));
+
+            String valor;
+            Envelope e;
+            e = ms.receive();
+            valor = ((MessageValue)e.getPayload()).getValue();
+            System.out.println("Soy proceso " + idP + "y recibo: " + valor);
+            ms.send(1,"Soy proceso " + idP + "y me voy");
+            ms.stopMailbox();
 	}
 
 }
