@@ -11,7 +11,6 @@ public class MessageValue implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Message:" + value + '\'' +
-				'}';
+		return "Message:" + value;
 	}
 }

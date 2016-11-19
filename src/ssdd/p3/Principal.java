@@ -11,7 +11,6 @@ public class Principal {
     public static void main (String[]args) {
 
         //Inicializamos los atributos con los parametros de la ejecucion
-
         if(args.length == 3 && args[0].equals("-d")) {
             debug = true;
             idP = Integer.parseInt(args[1]);

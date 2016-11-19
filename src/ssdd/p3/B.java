@@ -3,11 +3,8 @@ package ssdd.p3;
 import ssdd.ms.Envelope;
 import ssdd.ms.MessageSystem;
 import ssdd.ms.MessageValue;
-import sun.util.resources.cldr.as.LocaleNames_as;
 
 import java.io.FileNotFoundException;
-
-//import ssdd.ms.MessageSystem;
 
 public class B {
 
@@ -24,7 +21,7 @@ public class B {
 	public void lanzarEjecucion() throws FileNotFoundException{
 
             String mensaje1 = "1-Y ya lo sé, otra vez ha sucedido, \n" +
-                    "volaron los manteles y el domingo se hizo especial. \n";
+                    "volaron los manteles y el domingo se hizo especial.";
             String mensaje2 = "2-Flotaba en azoteas todo mi deseo, \n" +
                     "un solecito bueno y tus faldas al viento, \n" +
                     "nada más.";
@@ -37,7 +34,7 @@ public class B {
             e = ms.receive();
             valor = ((MessageValue)e.getPayload()).getValue();
             //System.out.println("Soy proceso " + idP + " y recibo: " + valor);
-            ms.send(1,"Soy proceso " + idP + " y me voy");
+            ms.send(1,new MessageValue("Soy proceso " + idP + " y me voy"));
 			ms.stopMailbox();
 	}
 

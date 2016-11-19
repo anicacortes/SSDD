@@ -27,25 +27,25 @@ public class A {
         Envelope e;
         e = ms.receive();
         valor = ((MessageValue)e.getPayload()).getValue();
-        //System.out.println(valor);
+        System.out.println(valor);
         e = ms.receive();
         valor = ((MessageValue)e.getPayload()).getValue();
-        //System.out.println(valor);
+        System.out.println(valor);
         e = ms.receive();
         valor = ((MessageValue)e.getPayload()).getValue();
-        //System.out.println(valor);
+        System.out.println(valor);
         e = ms.receive();
         valor = ((MessageValue)e.getPayload()).getValue();
-        //System.out.println(valor);
+        System.out.println(valor);
         ms.send(2, new MessageValue("Finalizo interaccion"));
         ms.send(3, new MessageValue("Finalizo interaccion"));
 
-        ms.receive();
+        e = ms.receive();
         valor = ((MessageValue)e.getPayload()).getValue();
-        //System.out.println("Me envian mensaje de finalizacion 1: " + valor);
-        ms.receive();
+        System.out.println("Me envian mensaje de finalizacion 1: " + valor);
+        e = ms.receive();
         valor = ((MessageValue)e.getPayload()).getValue();
-        //System.out.println("Me envian mensaje de finalizacion 2: " + valor);
+        System.out.println("Me envian mensaje de finalizacion 2: " + valor);
         ms.stopMailbox();
 
     }

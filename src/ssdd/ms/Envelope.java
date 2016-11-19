@@ -24,7 +24,6 @@ public class Envelope implements Serializable {
 		return "Envelope{" +
 				"source=" + source +
 				", destination=" + destination +
-				", payload=" + payload +
-				'}';
+				", payload=" + payload;
 	}
 }
