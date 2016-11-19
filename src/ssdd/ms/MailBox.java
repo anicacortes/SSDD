@@ -14,6 +14,7 @@ public class MailBox extends Thread {
     private ServerSocket socket;
     private BlockingQueue<Envelope> queue; // Lista de mensajes bloqueante del proceso
     private int tMax = 10;
+    private boolean fin = false;
 
     //para poner elemento y lo descarta si esta lleno --> offer
     //para sacar elemento --> take
@@ -26,15 +27,18 @@ public class MailBox extends Thread {
 	public void run() { // Servidor secuencial
 		try {
             socket = new ServerSocket(port);    //escucha en un puerto
-            while(true){
+            while(!fin){
                 System.out.println("Esperando mensaje en puerto "+port);
                 Socket s = socket.accept();
                 ObjectInputStream input = new ObjectInputStream(s.getInputStream());
                 Envelope e = (Envelope) input.readObject();
                 System.out.println("Receiving " + e.getPayload() + " from " + e.getSource() + " to " + e.getDestination());
                 queue.offer(e);     //mete en mensaje si cabe en la cola, sino lo descarta
-                System.out.println("Metido en la cola del proceso " + e.getDestination());
                 input.close();
+                if(e.getPayload().equals("Cerrar buzon")) {
+                    System.out.println("Proceso "+ e.getDestination() + " Fin TRUE");
+                    fin = true;
+                }
             }
         } catch (SocketException e) {
 			System.err.println("Cerrando buzón.");

@@ -14,7 +14,6 @@ public class PeerAddress {
 	}
 	
 	public Socket connect() throws UnknownHostException, IOException {
-		System.out.println("IP: "+address + " port: "+port);
 		return new Socket(address, port);
 	}
 }

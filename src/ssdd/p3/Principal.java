@@ -12,7 +12,7 @@ public class Principal {
 
         //Inicializamos los atributos con los parametros de la ejecucion
 
-        if(args.length == 3 && args[0] == "-d") {
+        if(args.length == 3 && args[0].equals("-d")) {
             debug = true;
             idP = Integer.parseInt(args[1]);
             fichero = args[2];

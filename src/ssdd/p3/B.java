@@ -35,8 +35,7 @@ public class B {
             Envelope e;
             e = ms.receive();
             valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Soy proceso " + idP + "y recibo: " + valor);
-            ms.send(1,"Soy proceso " + idP + "y me voy");
+            ms.send(3,"Cerrar buzon");
 			ms.stopMailbox();
 	}
 

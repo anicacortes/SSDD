@@ -27,18 +27,15 @@ public class A {
             Envelope e;
             e = ms.receive();
             valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Primer valor recibido:" + valor);
+            //System.out.println("Primer valor recibido:" + valor);
             e = ms.receive();
             valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Segundo valor recibido " + valor);
+            //System.out.println("Segundo valor recibido " + valor);
 
-            ms.send(2, new MessageValue("Finalizo interaccion"));
+            ms.send(2, new MessageValue("Cerrar buzon"));
             ms.receive();
             valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Me envian mensaje de finalizacion 1: " + valor);
-            ms.receive();
-            valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Me envian mensaje de finalizacion 2: " + valor);
+            System.out.println("Recibo mensaje de finalizacion 1: " + valor);
             ms.stopMailbox();
 
     }
