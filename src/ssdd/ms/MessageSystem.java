@@ -64,7 +64,6 @@ public class MessageSystem {
 							Integer.parseInt(line.substring(sep + 1))));
 					if (n == pid) {
                         port = addresses.get(addresses.size()-1).port;
-                        System.out.println("port cogido: "+port+ "n: "+n);
                     }
 				}
 			}
