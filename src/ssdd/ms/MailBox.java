@@ -33,7 +33,6 @@ public class MailBox extends Thread {
                 Envelope e = (Envelope) input.readObject();
                 System.out.println("Receiving " + e.getPayload() + " from " + e.getSource() + " to " + e.getDestination());
                 queue.offer(e);     //mete en mensaje si cabe en la cola, sino lo descarta
-                System.out.println("Metido en la cola del proceso " + e.getDestination());
                 input.close();
             }
         } catch (SocketException e) {

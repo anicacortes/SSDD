@@ -23,20 +23,21 @@ public class B {
 
 	public void lanzarEjecucion() throws FileNotFoundException{
 
-            String mensaje = "Y ya lo sé, otra vez ha sucedido, \n" +
-                    "volaron los manteles y el domingo se hizo especial. \n" +
-                    "Flotaba en azoteas todo mi deseo, \n" +
+            String mensaje1 = "1-Y ya lo sé, otra vez ha sucedido, \n" +
+                    "volaron los manteles y el domingo se hizo especial. \n";
+            String mensaje2 = "2-Flotaba en azoteas todo mi deseo, \n" +
                     "un solecito bueno y tus faldas al viento, \n" +
-                    "nada más...";
+                    "nada más.";
 			MessageSystem ms = new MessageSystem(idP, fichero, debug);
-			ms.send(1, new MessageValue(mensaje));
+			ms.send(1, new MessageValue(mensaje1));
+            ms.send(1, new MessageValue(mensaje2));
 
             String valor;
             Envelope e;
             e = ms.receive();
             valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Soy proceso " + idP + "y recibo: " + valor);
-            ms.send(1,"Soy proceso " + idP + "y me voy");
+            //System.out.println("Soy proceso " + idP + " y recibo: " + valor);
+            ms.send(1,"Soy proceso " + idP + " y me voy");
 			ms.stopMailbox();
 	}
 

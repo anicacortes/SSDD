@@ -22,24 +22,31 @@ public class A {
 
     public void lanzarEjecucion() throws FileNotFoundException{
 
-            MessageSystem ms = new MessageSystem(idP, fichero, debug);
-            String valor;
-            Envelope e;
-            e = ms.receive();
-            valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Primer valor recibido:" + valor);
-            e = ms.receive();
-            valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Segundo valor recibido " + valor);
+        MessageSystem ms = new MessageSystem(idP, fichero, debug);
+        String valor;
+        Envelope e;
+        e = ms.receive();
+        valor = ((MessageValue)e.getPayload()).getValue();
+        //System.out.println(valor);
+        e = ms.receive();
+        valor = ((MessageValue)e.getPayload()).getValue();
+        //System.out.println(valor);
+        e = ms.receive();
+        valor = ((MessageValue)e.getPayload()).getValue();
+        //System.out.println(valor);
+        e = ms.receive();
+        valor = ((MessageValue)e.getPayload()).getValue();
+        //System.out.println(valor);
+        ms.send(2, new MessageValue("Finalizo interaccion"));
+        ms.send(3, new MessageValue("Finalizo interaccion"));
 
-            ms.send(2, new MessageValue("Finalizo interaccion"));
-            ms.receive();
-            valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Me envian mensaje de finalizacion 1: " + valor);
-            ms.receive();
-            valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println("Me envian mensaje de finalizacion 2: " + valor);
-            ms.stopMailbox();
+        ms.receive();
+        valor = ((MessageValue)e.getPayload()).getValue();
+        //System.out.println("Me envian mensaje de finalizacion 1: " + valor);
+        ms.receive();
+        valor = ((MessageValue)e.getPayload()).getValue();
+        //System.out.println("Me envian mensaje de finalizacion 2: " + valor);
+        ms.stopMailbox();
 
     }
 
