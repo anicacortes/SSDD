@@ -27,12 +27,17 @@ public class MailBox extends Thread {
 	public void run() { // Servidor secuencial
 		try {
             socket = new ServerSocket(port);    //escucha en un puerto
-            while(true){
+            while(!fin){
                 Socket s = socket.accept();
                 ObjectInputStream input = new ObjectInputStream(s.getInputStream());
                 Envelope e = (Envelope) input.readObject();
-                queue.offer(e);     //mete en mensaje si cabe en la cola, sino lo descarta
+                if(((MessageValue)e.getPayload()).getValue().equals("Fin")){
+                    fin=true;
+                }else{
+                    queue.offer(e);     //mete en mensaje si cabe en la cola, sino lo descarta
+                }
                 input.close();
+                s.close();
             }
         } catch (SocketException e) {
 			System.err.println("Cerrando buzón.");

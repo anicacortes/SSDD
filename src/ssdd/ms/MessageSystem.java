@@ -41,8 +41,9 @@ public class MessageSystem {
         return mailbox.getNextMessage();
 	}
 	
-	public void stopMailbox() {
+	public void stopMailbox(int id) {
         try {
+			send(id, new MessageValue("Fin"));
             mailbox.join();
         } catch (InterruptedException e) {
             e.printStackTrace();

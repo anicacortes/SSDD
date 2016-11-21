@@ -3,7 +3,6 @@ package ssdd.p3;
 import ssdd.ms.Envelope;
 import ssdd.ms.MessageSystem;
 import ssdd.ms.MessageValue;
-
 import java.io.FileNotFoundException;
 
 
@@ -25,28 +24,19 @@ public class A {
         MessageSystem ms = new MessageSystem(idP, fichero, debug);
         String valor;
         Envelope e;
-        e = ms.receive();
-        valor = ((MessageValue)e.getPayload()).getValue();
-        System.out.println(valor);
-        e = ms.receive();
-        valor = ((MessageValue)e.getPayload()).getValue();
-        System.out.println(valor);
-        e = ms.receive();
-        valor = ((MessageValue)e.getPayload()).getValue();
-        System.out.println(valor);
-        e = ms.receive();
-        valor = ((MessageValue)e.getPayload()).getValue();
-        System.out.println(valor);
+        for(int i=0; i<12; i++){
+            e = ms.receive();
+            valor = ((MessageValue)e.getPayload()).getValue();
+            System.out.println(valor);
+        }
         ms.send(2, new MessageValue("Finalizo interaccion"));
         ms.send(3, new MessageValue("Finalizo interaccion"));
 
         e = ms.receive();
-        valor = ((MessageValue)e.getPayload()).getValue();
-        System.out.println("Me envian mensaje de finalizacion 1: " + valor);
+        ((MessageValue)e.getPayload()).getValue();
         e = ms.receive();
-        valor = ((MessageValue)e.getPayload()).getValue();
-        System.out.println("Me envian mensaje de finalizacion 2: " + valor);
-        ms.stopMailbox();
+        ((MessageValue)e.getPayload()).getValue();
+        ms.stopMailbox(idP);
 
     }
 
