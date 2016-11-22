@@ -1,3 +1,14 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: MailBox.java
+* TIEMPO: 1h
+* DESCRIPCIÓN: Se encarga de recibir los mensajes que llegan de otros procesos
+*           y almacenarlos en una lista con acceso en exclusión mutua si el
+*           número me mensajes almacenados es menor de 10.
+*/
 package ssdd.ms;
 
 import java.io.IOException;
@@ -13,18 +24,15 @@ public class MailBox extends Thread {
     private int port;
     private ServerSocket socket;
     private BlockingQueue<Envelope> queue; // Lista de mensajes bloqueante del proceso
-    private int tMax = 10;
+    private final int MAX = 10;
     private boolean fin = false;
-
-    //para poner elemento y lo descarta si esta lleno --> offer
-    //para sacar elemento --> take
 
     public MailBox(int p) {
 		port = p;
-        queue = new ArrayBlockingQueue<>(tMax);
+        queue = new ArrayBlockingQueue<>(MAX);
     }
 	
-	public void run() { // Servidor secuencial
+	public void run() {             // Servidor secuencial
 		try {
             socket = new ServerSocket(port);    //escucha en un puerto
             while(!fin){
@@ -49,7 +57,7 @@ public class MailBox extends Thread {
 	}
 
     /**
-     * Devuelve el primer mensaje de la cola. Si la cola eta vacia espera hasta que
+     * Devuelve el primer mensaje de la cola. Si la cola esta vacia espera hasta que
      * tiene un mensaje para devolver
      */
     public Envelope getNextMessage() {

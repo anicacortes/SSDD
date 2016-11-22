@@ -1,3 +1,12 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: A.java
+* TIEMPO: 0.5h
+* DESCRIPCIÓN: Proceso que realiza una interaccion de mensajes con los procesos B y c.
+*/
 package ssdd.p3;
 
 import ssdd.ms.Envelope;
@@ -18,8 +27,10 @@ public class A {
         this.fichero = fichero;
     }
 
-
-    public void lanzarEjecucion() throws FileNotFoundException{
+    /**
+     * Realiza en envio y recepcion de mensajes
+     */
+    public void lanzarEjecucion() throws FileNotFoundException {
 
         MessageSystem ms = new MessageSystem(idP, fichero, debug);
         String valor;
@@ -37,7 +48,6 @@ public class A {
         e = ms.receive();
         ((MessageValue)e.getPayload()).getValue();
         ms.stopMailbox(idP);
-
     }
 
 }

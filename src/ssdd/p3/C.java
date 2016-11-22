@@ -1,3 +1,12 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: C.java
+* TIEMPO: 0.5h
+* DESCRIPCIÓN: Proceso que realiza una interaccion de mensajes con el proceso A.
+*/
 package ssdd.p3;
 
 import ssdd.ms.Envelope;
@@ -18,17 +27,17 @@ public class C {
 		this.fichero = fichero;
 	}
 
+    /**
+     * Realiza en envio y recepcion de mensajes
+     */
 	public void lanzarEjecucion() throws FileNotFoundException{
 
 		String mensaje7 = "7- Recuerdo que sopló la luna y era en pleno día" +
 				"y entre aquellas nubes vislumbraste la estrella polar,	y algo más";
-
 		String mensaje8 = "8- Madelmans haciendo slalom por tu cuello, " +
 				"aire que se lleva tus misterios, hacia el Sur se van.";
-
 		String mensaje9 = "9- Y sé que a veces piensas que estoy algo ido," +
 				"pero nunca pierdo una sola oportunidad de admirar cómo ...";
-
 		String mensaje10 = "10- Te deslizas como si fueras de viento " +
 				" al contacto con mis dedos te desvanecieras.";
 		String mensaje11 = "11- Si tu magia ya no me hace efecto," +
@@ -42,10 +51,6 @@ public class C {
 		ms.send(1, new MessageValue(mensaje10));
 		ms.send(1, new MessageValue(mensaje11));
 		ms.send(1, new MessageValue(mensaje12));
-
-        for(int i=13; i<33; i++){
-            ms.send(1, new MessageValue("mesaje "+ i));
-        }
 
 		Envelope e;
 		e = ms.receive();

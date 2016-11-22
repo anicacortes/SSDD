@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: Principal.java
+* TIEMPO: 0.5h
+* DESCRIPCIÓN: Lanza el proceso indicado según el pid intrducido como parámetro
+*           con sus parámetros correspondientes introducidos por el usuario.
+*/
 package ssdd.p3;
 
 import java.io.FileNotFoundException;

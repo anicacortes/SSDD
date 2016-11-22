@@ -1,3 +1,12 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: B.java
+* TIEMPO: 0.5h
+* DESCRIPCIÓN: Proceso que realiza una interaccion de mensajes con el proceso A.
+*/
 package ssdd.p3;
 
 import ssdd.ms.Envelope;
@@ -18,6 +27,9 @@ public class B {
         this.fichero = fichero;
     }
 
+    /**
+     * Realiza en envio y recepcion de mensajes
+     */
     public void lanzarEjecucion() throws FileNotFoundException{
 
         String mensaje1 = "1-Y ya lo sé, otra vez ha sucedido, \n" +
@@ -27,7 +39,6 @@ public class B {
                 "nada más.";
         String mensaje3 = "3- Aeroplanos que saludo moviendo un espejo," +
                 "la ropa y tu pelo se movían al mismo compás nada más.";
-
         String mensaje4 = "4- Te deslizas como si fueras de viento" +
                 "y al contacto con mis dedos te desvanecieras.";
         String mensaje5 = "5-Si tu magia ya no me hace efecto, \n" +

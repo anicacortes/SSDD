@@ -1,10 +1,19 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: MessageSystem.java
+* TIEMPO: 1h
+* DESCRIPCIÓN: Se encarga del envio y recepcion de mensajes interactuando con
+*           su propio buzon de mensajes, el cual lo crea al inicio.
+*/
 package ssdd.ms;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class MessageSystem {
 	private int pid;
@@ -19,7 +28,10 @@ public class MessageSystem {
 		mailbox = new MailBox(port);
 		mailbox.start();
 	}
-	
+
+    /**
+     * Envía el mensaje indicado al proceso indicado como un objeto serializable
+     */
 	public void send(int dst, Serializable message) {
 		if (showDebugMsgs)
 			System.out.println("Sending " + message.toString() + " from " + pid + " to " + dst);
@@ -37,10 +49,17 @@ public class MessageSystem {
 		}
 	}
 
+    /**
+     * Devuelve el primero mensaje de la cola
+     */
 	public Envelope receive() {
         return mailbox.getNextMessage();
 	}
-	
+
+    /**
+     * Indica la finalizacion del proceso del buzon mediante
+     * el envio de un mensaje
+     */
 	public void stopMailbox(int id) {
         try {
 			send(id, new MessageValue("Fin"));
@@ -50,6 +69,10 @@ public class MessageSystem {
         }
     }
 
+    /**
+     * Almacena en la lista addresses la información de las máquinas
+     * disponible en el fichero.
+     */
 	private int loadPeerAddresses(String networkFile) throws FileNotFoundException {
 		BufferedReader in = new BufferedReader(new FileReader(networkFile));
 		String line;
