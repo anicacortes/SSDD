@@ -7,7 +7,7 @@
 * TIEMPO: 0.5h
 * DESCRIPCIÓN: Proceso que realiza una interaccion de mensajes con los procesos B y c.
 */
-package ssdd.p3;
+package ssdd.p4;
 
 import ssdd.ms.Envelope;
 import ssdd.ms.MessageSystem;

@@ -8,7 +8,7 @@
 * DESCRIPCIÓN: Lanza el proceso indicado según el pid intrducido como parámetro
 *           con sus parámetros correspondientes introducidos por el usuario.
 */
-package ssdd.p3;
+package ssdd.p4;
 
 import java.io.FileNotFoundException;
 

@@ -26,6 +26,8 @@ public class MailBox extends Thread {
     private BlockingQueue<Envelope> queue; // Lista de mensajes bloqueante del proceso
     private final int MAX = 10;
     private boolean fin = false;
+    private int localLamportClock;
+    private int tLamportClock;
 
     public MailBox(int p) {
 		port = p;
@@ -39,6 +41,16 @@ public class MailBox extends Thread {
                 Socket s = socket.accept();
                 ObjectInputStream input = new ObjectInputStream(s.getInputStream());
                 Envelope e = (Envelope) input.readObject();
+                //Modificar el reloj lamport local
+                tLamportClock = e.getLamportClock();
+                localLamportClock = MessageSystem.getLamportClock();
+                if(localLamportClock >= tLamportClock){
+                    localLamportClock++;
+                }else{
+                    localLamportClock = tLamportClock+1;
+                }
+                MessageSystem.setLamportClock(localLamportClock);
+                System.out.println("llega mesaje con valor " +tLamportClock+ " el valor local es "+localLamportClock);
                 if(((MessageValue)e.getPayload()).getValue().equals("Fin")){
                     fin=true;
                 }else{

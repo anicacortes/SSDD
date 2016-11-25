@@ -16,11 +16,13 @@ public class Envelope implements Serializable {
 	private int source;
 	private int destination;
 	private Serializable payload;
+	private int lamportClock;
 
-	public Envelope(int s, int d, Serializable p) {
+	public Envelope(int s, int d, Serializable p, int c) {
 		source = s;
 		destination = d;
 		payload = p;
+		lamportClock = c;
 	}
 	
 	public int getSource() { return source; }
@@ -28,11 +30,16 @@ public class Envelope implements Serializable {
 	public int getDestination() { return destination; }
 	public Serializable getPayload() { return payload; }
 
-	@Override
+    public int getLamportClock() {
+        return lamportClock;
+    }
+
+    @Override
 	public String toString() {
 		return "Envelope{" +
 				"source=" + source +
 				", destination=" + destination +
-				", payload=" + payload;
+				", payload=" + payload +
+                ", lamportClock=" + lamportClock ;
 	}
 }

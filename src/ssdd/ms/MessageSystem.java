@@ -20,11 +20,13 @@ public class MessageSystem {
 	private boolean showDebugMsgs;
 	private ArrayList<PeerAddress> addresses = new ArrayList<PeerAddress>();		//lista de @ip-puerto del resto de procesos
 	private MailBox mailbox;
+    private static int lamportClock;
 
 	public MessageSystem(int source, String networkFile, boolean debug) throws FileNotFoundException {
 		showDebugMsgs = debug;
 		pid = source;
 		int port = loadPeerAddresses(networkFile);
+        lamportClock = 1;
 		mailbox = new MailBox(port);
 		mailbox.start();
 	}
@@ -34,9 +36,11 @@ public class MessageSystem {
      */
 	public void send(int dst, Serializable message) {
 		if (showDebugMsgs)
-			System.out.println("Sending " + message.toString() + " from " + pid + " to " + dst);
-		try {
-			Envelope e = new Envelope(pid,dst,message); //crea mensaje
+			System.out.println("Sending " + message.toString() + " from " + pid + " to " + dst+" with Lamport clock " + lamportClock);
+
+        try {
+			Envelope e = new Envelope(pid,dst,message,lamportClock); //crea mensaje
+            lamportClock++;
             PeerAddress p = addresses.get(dst-1);         //obtener ip-puerto
             Socket s = p.connect();
             ObjectOutputStream msg = new ObjectOutputStream(s.getOutputStream());
@@ -67,6 +71,14 @@ public class MessageSystem {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static int getLamportClock() {
+        return lamportClock;
+    }
+
+    public static void setLamportClock(int lamportClock) {
+        MessageSystem.lamportClock = lamportClock;
     }
 
     /**
