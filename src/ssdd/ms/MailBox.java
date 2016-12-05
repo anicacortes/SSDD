@@ -50,12 +50,14 @@ public class MailBox extends Thread {
                     localLamportClock = tLamportClock+1;
                 }
                 MessageSystem.setLamportClock(localLamportClock);
-                System.out.println("llega mesaje con valor " +tLamportClock+ " el valor local es "+localLamportClock);
-                if(((MessageValue)e.getPayload()).getValue().equals("Fin")){
+               // MessageValue m = (MessageValue)e.getPayload();
+                System.out.println("LLEGA mesaje "+((MessageValue)e.getPayload()).getValue()+" de "+e.getSource()+" con valor " +tLamportClock+ " el LC es "+localLamportClock);
+                /*if(m.getValue().equals("Fin")){
                     fin=true;
                 }else{
                     queue.offer(e);     //mete en mensaje si cabe en la cola, sino lo descarta
-                }
+                }*/
+                queue.offer(e);
                 input.close();
                 s.close();
             }

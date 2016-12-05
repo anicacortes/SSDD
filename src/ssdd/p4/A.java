@@ -12,6 +12,8 @@ package ssdd.p4;
 import ssdd.ms.Envelope;
 import ssdd.ms.MessageSystem;
 import ssdd.ms.MessageValue;
+import ssdd.ms.TotalOrderMulticast;
+
 import java.io.FileNotFoundException;
 
 
@@ -32,22 +34,19 @@ public class A {
      */
     public void lanzarEjecucion() throws FileNotFoundException {
 
+        int nMensajes = 0;
         MessageSystem ms = new MessageSystem(idP, fichero, debug);
-        String valor;
-        Envelope e;
-        for(int i=0; i<12; i++){
-            e = ms.receive();
-            valor = ((MessageValue)e.getPayload()).getValue();
-            System.out.println(valor);
-        }
-        ms.send(2, new MessageValue("Finalizo interaccion"));
-        ms.send(3, new MessageValue("Finalizo interaccion"));
+        TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
 
-        e = ms.receive();
-        ((MessageValue)e.getPayload()).getValue();
-        e = ms.receive();
-        ((MessageValue)e.getPayload()).getValue();
-        ms.stopMailbox(idP);
+        while(true) {
+
+            /*if (nMensajes <= 3) {
+                t.sendMulticast("A - Mensaje numero " + nMensajes);
+                nMensajes++;
+            }*/
+            Envelope e = t.receiveMulticast();
+            System.out.println(((MessageValue) e.getPayload()).getValue());
+        }
     }
 
 }

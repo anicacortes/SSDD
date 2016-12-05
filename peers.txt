@@ -1,4 +1,2 @@
 localhost:2001
 localhost:2002
-localhost:8082
-localhost:8083

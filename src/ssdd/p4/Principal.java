@@ -50,6 +50,10 @@ public class Principal {
                     C pC = new C(debug, idP, fichero);
                     pC.lanzarEjecucion();
                     break;
+                case 4:
+                    D pD = new D(debug, idP, fichero);
+                    pD.lanzarEjecucion();
+                    break;
             }
         }
         catch(FileNotFoundException e) {

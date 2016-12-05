@@ -40,7 +40,6 @@ public class MessageSystem {
 
         try {
 			Envelope e = new Envelope(pid,dst,message,lamportClock); //crea mensaje
-            lamportClock++;
             PeerAddress p = addresses.get(dst-1);         //obtener ip-puerto
             Socket s = p.connect();
             ObjectOutputStream msg = new ObjectOutputStream(s.getOutputStream());
@@ -51,6 +50,18 @@ public class MessageSystem {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Envía el mensaje indicado al todos los procesos menos a si mismo como un objeto serializable
+	 */
+	public void sendMulticast(Serializable message){
+		for(int i=1; i<=addresses.size(); i++){
+			if(pid!=i){
+				send(i,message);
+			}
+		}
+		lamportClock++;
 	}
 
     /**
@@ -79,6 +90,10 @@ public class MessageSystem {
 
     public static void setLamportClock(int lamportClock) {
         MessageSystem.lamportClock = lamportClock;
+    }
+
+    public int getProcess() {
+        return addresses.size();
     }
 
     /**

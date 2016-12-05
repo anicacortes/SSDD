@@ -16,13 +16,13 @@ import ssdd.ms.TotalOrderMulticast;
 
 import java.io.FileNotFoundException;
 
-public class C {
+public class D {
 
 	private  boolean debug;
 	private  int idP;
 	private  String fichero;
 
-	public C(boolean debug, int idP, String fichero) {
+	public D(boolean debug, int idP, String fichero) {
 		this.debug = debug;
 		this.idP = idP;
 		this.fichero = fichero;
@@ -32,13 +32,14 @@ public class C {
      * Realiza en envio y recepcion de mensajes
      */
 	public void lanzarEjecucion() throws FileNotFoundException{
+
 		Integer nMensajes = 0;
 		MessageSystem ms = new MessageSystem(idP, fichero, debug);
 		TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
 		while(true) {
 
 			if (nMensajes <= 3) {
-				t.sendMulticast(new MessageValue("C - Mensaje numero " + nMensajes.toString()));
+				t.sendMulticast(new MessageValue("D - Mensaje numero " + nMensajes.toString()));
 				nMensajes++;
 			}
 			Envelope e = t.receiveMulticast();
