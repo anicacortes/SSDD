@@ -35,12 +35,17 @@ public class C {
 		Integer nMensajes = 0;
 		MessageSystem ms = new MessageSystem(idP, fichero, debug);
 		TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
-		while(true) {
 
-			if (nMensajes <= 3) {
-				t.sendMulticast(new MessageValue("C - Mensaje numero " + nMensajes.toString()));
-				nMensajes++;
-			}
+
+        EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t,"C - mensaje inicial");
+		enviaC.start();
+		int i=0;
+		while(true) {
+			if(i<5) {
+				enviaC = new EnviaMsgRunnableC(t, "C - mensaje "+i);
+				enviaC.start();
+                i++;
+            }
 			Envelope e = t.receiveMulticast();
 			System.out.println(((MessageValue) e.getPayload()).getValue());
 		}

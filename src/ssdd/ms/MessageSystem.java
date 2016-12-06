@@ -61,7 +61,7 @@ public class MessageSystem {
 				send(i,message);
 			}
 		}
-		lamportClock++;
+		//lamportClock++;
 	}
 
     /**

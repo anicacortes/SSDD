@@ -14,7 +14,7 @@ public class TotalOrderMulticast {
     private int pid;
 
     private boolean accesoSC;
-    private ArrayList<Boolean> Pretrasados;
+    private ArrayList<Integer> Pretrasados;
     private final String ACK = "ACK";
     private final String REQ = "REQ";
     private int ackPendientes;
@@ -29,8 +29,7 @@ public class TotalOrderMulticast {
     public TotalOrderMulticast(MessageSystem ms, int idP){
         msystem = ms;
         pid = idP;
-        Pretrasados = new ArrayList<>(ms.getProcess());
-        Collections.fill(Pretrasados, Boolean.FALSE); //rellena lista con todos atributos a falso
+        Pretrasados = new ArrayList<>();
         accesoSC = false;
         ackPendientes = msystem.getProcess()-1;
     }
@@ -40,6 +39,7 @@ public class TotalOrderMulticast {
         //si un mensaje ya se esta intentando enviar, espero
         try {
             while(accesoSC){
+                System.out.println("esta intentando acceder mensaje : "+((MessageValue)message).getValue());
                 esperandoEnviar.await();
             }
             accesoSC = true;
@@ -57,13 +57,14 @@ public class TotalOrderMulticast {
         msystem.sendMulticast(message);
         //cuando envia mensaje --> restarua valor ack pendientes
         for(int i=0; i<Pretrasados.size(); i++){
-            if(Pretrasados.get(i) && i!=pid){
-                msystem.sendMulticast(new MessageValue(ACK));
-                Pretrasados.set(i,false);
+            if(Pretrasados.get(i)!=pid){
+                msystem.send(Pretrasados.get(i),new MessageValue(ACK));
+                Pretrasados.remove(i);
             }
         }
         ackPendientes = msystem.getProcess()-1;
         accesoSC = false;
+        msystem.setLamportClock(msystem.getLamportClock()+1);
         esperandoEnviar.signal();
         mutex.unlock();
     }
@@ -72,9 +73,8 @@ public class TotalOrderMulticast {
         while (true) {
             Envelope e = msystem.receive();
             String m = ((MessageValue) e.getPayload()).getValue();
-            /*if(e.getLamportClock()>msystem.getLamportClock()){
-                maxLamportClock = e.getLamportClock();
-            }*/
+            System.out.println("LEE mensaje: "+m+" ClockLocal: "+msystem.getLamportClock()+" ClockMsg "+
+                    e.getLamportClock());
             if (m.equals(REQ)) {
                 //Si el proceso esta/espera acceder a SC
                 if (accesoSC) {
@@ -84,14 +84,14 @@ public class TotalOrderMulticast {
                         msystem.send(e.getSource(), new MessageValue(ACK));
                     } else if (e.getLamportClock() > msystem.getLamportClock()) {
                         System.out.println("me toca a mi");
-                        Pretrasados.set(e.getSource(), true);
+                        Pretrasados.add(e.getSource());
                     } else {
                         if (e.getSource() <= pid) {
                             System.out.println("pid mayor el mio");
                             msystem.send(e.getSource(), new MessageValue(ACK));
                         } else {
                             System.out.println("pid mayor el suyo");
-                            Pretrasados.set(e.getSource(), true);
+                            Pretrasados.add(e.getSource());
                         }
                     }
                 } else {
@@ -109,8 +109,17 @@ public class TotalOrderMulticast {
                 }
             }
             else{
-                return e;
+                System.out.println("recalcular rejoj");
+                //Aumentamos el valor del reloj si el mensaje no es req ni ack
+                if(e.getLamportClock()>msystem.getLamportClock()){
+                    msystem.setLamportClock(e.getLamportClock()+1);
+                }else{
+                    msystem.setLamportClock(msystem.getLamportClock()+1);
+                }
             }
+            //else{
+                return e;
+            //}
         }
     }
 }

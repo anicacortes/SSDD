@@ -39,11 +39,6 @@ public class A {
         TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
 
         while(true) {
-
-            /*if (nMensajes <= 3) {
-                t.sendMulticast("A - Mensaje numero " + nMensajes);
-                nMensajes++;
-            }*/
             Envelope e = t.receiveMulticast();
             System.out.println(((MessageValue) e.getPayload()).getValue());
         }

@@ -37,8 +37,6 @@ public class B {
         MessageSystem ms = new MessageSystem(idP, fichero, debug);
         TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
 
-        EnviaMsgRunnable envia = new EnviaMsgRunnable(t);
-        envia.start();
         while(true) {
             Envelope e = t.receiveMulticast();
             System.out.println(((MessageValue) e.getPayload()).getValue());

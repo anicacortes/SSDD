@@ -42,16 +42,16 @@ public class MailBox extends Thread {
                 ObjectInputStream input = new ObjectInputStream(s.getInputStream());
                 Envelope e = (Envelope) input.readObject();
                 //Modificar el reloj lamport local
-                tLamportClock = e.getLamportClock();
+                /*tLamportClock = e.getLamportClock();
                 localLamportClock = MessageSystem.getLamportClock();
                 if(localLamportClock >= tLamportClock){
                     localLamportClock++;
                 }else{
                     localLamportClock = tLamportClock+1;
-                }
-                MessageSystem.setLamportClock(localLamportClock);
+                }*/
+                //MessageSystem.setLamportClock(localLamportClock);
                // MessageValue m = (MessageValue)e.getPayload();
-                System.out.println("LLEGA mesaje "+((MessageValue)e.getPayload()).getValue()+" de "+e.getSource()+" con valor " +tLamportClock+ " el LC es "+localLamportClock);
+                System.out.println("LLEGA al BUZON mesaje "+((MessageValue)e.getPayload()).getValue()+" de "+e.getSource()+" con valor " +e.getLamportClock()+ " el LC es "+MessageSystem.getLamportClock());
                 /*if(m.getValue().equals("Fin")){
                     fin=true;
                 }else{
