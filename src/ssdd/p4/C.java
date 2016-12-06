@@ -32,22 +32,17 @@ public class C {
      * Realiza en envio y recepcion de mensajes
      */
 	public void lanzarEjecucion() throws FileNotFoundException{
-		Integer nMensajes = 0;
 		MessageSystem ms = new MessageSystem(idP, fichero, debug);
 		TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
 
-
-        EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t,"C - mensaje inicial");
+        /*EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t);
 		enviaC.start();
-		int i=0;
 		while(true) {
-			if(i<5) {
-				enviaC = new EnviaMsgRunnableC(t, "C - mensaje "+i);
-				enviaC.start();
-                i++;
-            }
 			Envelope e = t.receiveMulticast();
-			System.out.println(((MessageValue) e.getPayload()).getValue());
-		}
+            String m = ((MessageValue) e.getPayload()).getValue();
+            if(!m.equals("ACK") && !m.equals("REQ")){
+                System.out.println(m);
+            }
+		}*/
 	}
 }

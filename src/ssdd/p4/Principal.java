@@ -43,15 +43,15 @@ public class Principal {
                     pA.lanzarEjecucion();
                     break;
                 case 2:
-                    B pB = new B(debug, idP, fichero);
+                    A pB = new A(debug, idP, fichero);
                     pB.lanzarEjecucion();
                     break;
                 case 3:
-                    C pC = new C(debug, idP, fichero);
+                    A pC = new A(debug, idP, fichero);
                     pC.lanzarEjecucion();
                     break;
                 case 4:
-                    D pD = new D(debug, idP, fichero);
+                    A pD = new A(debug, idP, fichero);
                     pD.lanzarEjecucion();
                     break;
             }

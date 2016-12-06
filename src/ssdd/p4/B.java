@@ -39,7 +39,10 @@ public class B {
 
         while(true) {
             Envelope e = t.receiveMulticast();
-            System.out.println(((MessageValue) e.getPayload()).getValue());
+            String m = ((MessageValue) e.getPayload()).getValue();
+            if(!m.equals("REQ")){
+                System.out.println(m);
+            }
         }
     }
 

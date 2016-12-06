@@ -51,7 +51,7 @@ public class MailBox extends Thread {
                 }*/
                 //MessageSystem.setLamportClock(localLamportClock);
                // MessageValue m = (MessageValue)e.getPayload();
-                System.out.println("LLEGA al BUZON mesaje "+((MessageValue)e.getPayload()).getValue()+" de "+e.getSource()+" con valor " +e.getLamportClock()+ " el LC es "+MessageSystem.getLamportClock());
+                //System.out.println("LLEGA al BUZON mesaje "+((MessageValue)e.getPayload()).getValue()+" de "+e.getSource()+" con valor " +e.getLamportClock()+ " el LC es "+MessageSystem.getLamportClock());
                 /*if(m.getValue().equals("Fin")){
                     fin=true;
                 }else{

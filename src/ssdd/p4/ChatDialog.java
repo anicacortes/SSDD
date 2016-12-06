@@ -10,13 +10,16 @@ package ssdd.p4;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 public class ChatDialog extends JFrame {
     private JButton    sendButton = new JButton("Enviar");
     private JTextField messageField = new JTextField();
     private JTextArea  messageList = new JTextArea();
 
-    public ChatDialog(final ActionListener l) {
+    public ChatDialog(final ActionListener l, final Integer pid) {
         // Todo el código que modifica componentes de Swing debe ejecutarse
         // en el hilo de eventos de Swing.
         SwingUtilities.invokeLater(new Runnable() { public void run() {
@@ -41,7 +44,9 @@ public class ChatDialog extends JFrame {
             messagePanel.add(messageField);
             messagePanel.add(sendButton);
             getContentPane().add(messagePanel, BorderLayout.SOUTH);
-
+            Border lowerEtched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
+            TitledBorder title = BorderFactory.createTitledBorder(lowerEtched, "Proceso "+pid.toString());
+            scroller.setBorder(title);
             pack();
             setSize(400, 600);
             setVisible(true);

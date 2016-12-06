@@ -5,21 +5,14 @@ import ssdd.ms.TotalOrderMulticast;
 
 public class EnviaMsgRunnableC extends Thread{
 
-    TotalOrderMulticast t;
-    String s;
-    public EnviaMsgRunnableC(TotalOrderMulticast tom, String msg){
+    private TotalOrderMulticast t;
+    private String s;
+    public EnviaMsgRunnableC(TotalOrderMulticast tom, String m){
+        s = m;
         t = tom;
-        s = msg;
     }
 
-    public void run(){
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public void run() {
         t.sendMulticast(new MessageValue(s));
-
     }
-
 }

@@ -9,19 +9,20 @@
 */
 package ssdd.p4;
 
-import ssdd.ms.Envelope;
-import ssdd.ms.MessageSystem;
-import ssdd.ms.MessageValue;
-import ssdd.ms.TotalOrderMulticast;
+import ssdd.ms.*;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 
 
 public class A {
 
-    private  boolean debug;
-    private  int idP;
-    private  String fichero;
+    private boolean debug;
+    private int idP;
+    private String fichero;
+    private ChatDialog v;
 
     public A(boolean debug, int idP, String fichero) {
         this.debug = debug;
@@ -34,13 +35,29 @@ public class A {
      */
     public void lanzarEjecucion() throws FileNotFoundException {
 
-        int nMensajes = 0;
+        String m;
         MessageSystem ms = new MessageSystem(idP, fichero, debug);
-        TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
+        final TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
 
+        v = new ChatDialog(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String m = v.text();    //coge texto del campo
+                EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t,m);  //envio desde thread
+                enviaC.start();
+                if (!m.isEmpty()) {
+                    v.addMessage("Yo: " + m);
+                }
+            }
+        }, idP);
+        v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        System.out.println("voy a escuchar");
         while(true) {
             Envelope e = t.receiveMulticast();
-            System.out.println(((MessageValue) e.getPayload()).getValue());
+            //añado mensaje si no es res, ack ni es mio
+            if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
+                m = ((MessageValue) e.getPayload()).getValue();
+                v.addMessage(e.getSource() +": "+m);
+            }
         }
     }
 
