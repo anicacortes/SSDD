@@ -18,9 +18,9 @@ public class TotalOrderMulticast {
     private final String ACK = "ACK";
     private final String REQ = "REQ";
     private int ackPendientes;
+    private int maxLamportClock;
 
     private Lock mutex = new ReentrantLock();
-    private Lock mutex2 = new ReentrantLock();
 
     private Condition esperandoACKs = mutex.newCondition();
     private Condition esperandoEnviar = mutex.newCondition();
@@ -32,6 +32,7 @@ public class TotalOrderMulticast {
         Pretrasados = new ArrayList<>();
         accesoSC = false;
         ackPendientes = msystem.getProcess()-1;
+        maxLamportClock=1;
     }
 
     public void sendMulticast(Serializable message){
@@ -64,7 +65,7 @@ public class TotalOrderMulticast {
         }
         ackPendientes = msystem.getProcess()-1;
         accesoSC = false;
-        msystem.setLamportClock(msystem.getLamportClock()+1);
+        msystem.setLamportClock(maxLamportClock+1);
         esperandoEnviar.signal();
         mutex.unlock();
     }
@@ -111,10 +112,8 @@ public class TotalOrderMulticast {
             else{
                 System.out.println("recalcular rejoj");
                 //Aumentamos el valor del reloj si el mensaje no es req ni ack
-                if(e.getLamportClock()>msystem.getLamportClock()){
-                    msystem.setLamportClock(e.getLamportClock()+1);
-                }else{
-                    msystem.setLamportClock(msystem.getLamportClock()+1);
+                if(e.getLamportClock()>maxLamportClock){
+                    maxLamportClock=e.getLamportClock();
                 }
             }
             //else{

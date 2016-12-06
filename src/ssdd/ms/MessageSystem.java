@@ -53,15 +53,22 @@ public class MessageSystem {
 	}
 
 	/**
-	 * Envía el mensaje indicado al todos los procesos menos a si mismo como un objeto serializable
+	 * Envía el mensaje indicado al todos los procesos menos a si mismo como un objeto serializable si
+     * son mensajes de request o ack. En caso de ser otro tipo de mensajes, se lo envia a si mismo tambien.
 	 */
 	public void sendMulticast(Serializable message){
-		for(int i=1; i<=addresses.size(); i++){
-			if(pid!=i){
-				send(i,message);
-			}
-		}
-		//lamportClock++;
+		if(((MessageValue)message).getValue().equals("ACK") ||
+                ((MessageValue)message).getValue().equals("REQ")){
+            for(int i=1; i<=addresses.size(); i++){
+                if(pid!=i){
+                    send(i,message);
+                }
+            }
+        }else{
+            for(int i=1; i<=addresses.size(); i++){
+                send(i,message);
+            }
+        }
 	}
 
     /**
