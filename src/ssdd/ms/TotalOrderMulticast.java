@@ -79,7 +79,6 @@ public class TotalOrderMulticast {
             Envelope e = msystem.receive();
             if (e.getPayload() instanceof REQ) {
                 //Si el proceso esta/espera acceder a SC
-                System.out.println("se ha detectado REQ");
                 if (accesoSC) {
                     if (e.getLamportClock() < msystem.getLamportClock()) {
                         msystem.send(e.getSource(), new ACK());
@@ -96,7 +95,6 @@ public class TotalOrderMulticast {
                     msystem.send(e.getSource(), new ACK());
                 }
             } else if (e.getPayload() instanceof ACK) {
-                System.out.println("recibo ACK, bien uno menos");
                 ackPendientes--;
                 if(ackPendientes==0){
                     mutex.lock();
