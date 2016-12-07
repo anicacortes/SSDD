@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: TotalOrderMulticast.java
+* TIEMPO: 8h
+* DESCRIPCIÓN: Implementacion del algoritmo Ricart-Agrawala utilizando los relojes de Lamport
+*           para el envio y recepcion de mensajes multicast.
+*/
 package ssdd.ms;
 
 import java.io.Serializable;
@@ -70,7 +80,6 @@ public class TotalOrderMulticast {
     public Envelope receiveMulticast() {
         while (true) {
             Envelope e = msystem.receive();
-            //String m = ((MessageValue) e.getPayload()).getValue();
             //System.out.println("LEE mensaje: "+m+" ClockLocal: "+msystem.getLamportClock()+" ClockMsg "+
              //       e.getLamportClock());
             if (e.getPayload() instanceof REQ) {

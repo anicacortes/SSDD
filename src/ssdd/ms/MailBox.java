@@ -26,8 +26,6 @@ public class MailBox extends Thread {
     private BlockingQueue<Envelope> queue; // Lista de mensajes bloqueante del proceso
     private final int MAX = 10;
     private boolean fin = false;
-    private int localLamportClock;
-    private int tLamportClock;
 
     public MailBox(int p) {
 		port = p;
@@ -41,22 +39,6 @@ public class MailBox extends Thread {
                 Socket s = socket.accept();
                 ObjectInputStream input = new ObjectInputStream(s.getInputStream());
                 Envelope e = (Envelope) input.readObject();
-                //Modificar el reloj lamport local
-                /*tLamportClock = e.getLamportClock();
-                localLamportClock = MessageSystem.getLamportClock();
-                if(localLamportClock >= tLamportClock){
-                    localLamportClock++;
-                }else{
-                    localLamportClock = tLamportClock+1;
-                }*/
-                //MessageSystem.setLamportClock(localLamportClock);
-               // MessageValue m = (MessageValue)e.getPayload();
-                //System.out.println("LLEGA al BUZON mesaje "+((MessageValue)e.getPayload()).getValue()+" de "+e.getSource()+" con valor " +e.getLamportClock()+ " el LC es "+MessageSystem.getLamportClock());
-                /*if(m.getValue().equals("Fin")){
-                    fin=true;
-                }else{
-                    queue.offer(e);     //mete en mensaje si cabe en la cola, sino lo descarta
-                }*/
                 queue.offer(e);
                 input.close();
                 s.close();

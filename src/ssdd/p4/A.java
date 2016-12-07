@@ -50,7 +50,6 @@ public class A {
             }
         }, idP);
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        System.out.println("voy a escuchar");
         while(true) {
             Envelope e = t.receiveMulticast();
             //añado mensaje si no es res, ack ni es mio

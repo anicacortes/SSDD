@@ -1,3 +1,13 @@
+/*
+* AUTOR: Ana Roig Jimenez
+* NIA: 686329
+* AUTOR: Beatriz Pérez Cancer
+* NIA: 683546
+* FICHERO: EnviaMsgRunnableC.java
+* TIEMPO: 0.5h
+* DESCRIPCIÓN: Realiza la llamada el metodo sendMulticast para realizar en envio desde
+*           un thread
+*/
 package ssdd.p4;
 
 import ssdd.ms.MessageValue;
