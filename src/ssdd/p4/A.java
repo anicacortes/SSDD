@@ -35,27 +35,14 @@ public class A {
      */
     public void lanzarEjecucion() throws FileNotFoundException {
 
-        String m;
         MessageSystem ms = new MessageSystem(idP, fichero, debug);
-        final TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
-
-        v = new ChatDialog(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String m = v.text();    //coge texto del campo
-                EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t,m);  //envio desde thread
-                enviaC.start();
-                if (!m.isEmpty()) {
-                    v.addMessage("Yo: " + m);
-                }
-            }
-        }, idP);
-        v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
+        String m;
         while(true) {
             Envelope e = t.receiveMulticast();
-            //añado mensaje si no es res, ack ni es mio
-            if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
+            if(!(e.getPayload() instanceof REQ)){
                 m = ((MessageValue) e.getPayload()).getValue();
-                v.addMessage(e.getSource() +": "+m);
+                System.out.println(m);
             }
         }
     }

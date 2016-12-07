@@ -9,10 +9,7 @@
 */
 package ssdd.p4;
 
-import ssdd.ms.Envelope;
-import ssdd.ms.MessageSystem;
-import ssdd.ms.MessageValue;
-import ssdd.ms.TotalOrderMulticast;
+import ssdd.ms.*;
 
 import java.io.FileNotFoundException;
 
@@ -34,14 +31,15 @@ public class D {
 	public void lanzarEjecucion() throws FileNotFoundException{
 		MessageSystem ms = new MessageSystem(idP, fichero, debug);
 		TotalOrderMulticast t = new TotalOrderMulticast(ms, idP);
+        String m;
 
-		EnviaMsgRunnableD envia = new EnviaMsgRunnableD(t);
+        EnviaMsgRunnableD envia = new EnviaMsgRunnableD(t);
 		envia.start();
 		while(true) {
 			Envelope e = t.receiveMulticast();
-            String m = ((MessageValue) e.getPayload()).getValue();
-            if((!m.equals("ACK")) && (!m.equals("REQ"))){
-                System.out.println(m);
+			if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
+                m = ((MessageValue) e.getPayload()).getValue();
+				System.out.println(m);
             }
 		}
 	}
