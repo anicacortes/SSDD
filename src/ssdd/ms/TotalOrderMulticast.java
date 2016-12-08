@@ -28,8 +28,9 @@ public class TotalOrderMulticast {
     private int ackPendientes;
     private int maxLamportClock;
     private Lock mutex = new ReentrantLock();
-    private Condition esperandoACKs = mutex.newCondition();
+//    private Condition esperandoACKs = mutex.newCondition();
     private Condition esperandoEnviar = mutex.newCondition();
+    private Serializable msg;
 
     public TotalOrderMulticast(MessageSystem ms, int idP){
         msystem = ms;
@@ -50,28 +51,9 @@ public class TotalOrderMulticast {
                 esperandoEnviar.await();
             }
             accesoSC = true;
+            msg = message;
             //envia peticion a todos para ver si puede entrar
             msystem.sendMulticast(new REQ());
-            //espera a recibir todos acks
-            while (ackPendientes > 0) {
-                esperandoACKs.await();
-            }
-
-            msystem.setLamportClock(maxLamportClock);
-            msystem.sendMulticast(message);
-            //cuando envia mensaje --> restarua valor ack pendientes
-            System.out.println("tamaño retrasados: " + Pretrasados.size());
-            for (int i = 0; i < Pretrasados.size(); i++) {
-                if (Pretrasados.get(i) != pid) {
-                    System.out.println("despierto a " + Pretrasados.get(i));
-                    msystem.send(Pretrasados.get(i), new ACK());
-                }
-            }
-            Pretrasados.removeAll(Pretrasados); //elimina los elementos pendientes
-            ackPendientes = msystem.getProcess() - 1;
-            accesoSC = false;
-            msystem.setLamportClock(msystem.getLamportClock() + 1);
-            esperandoEnviar.signal();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -83,7 +65,6 @@ public class TotalOrderMulticast {
     public Envelope receiveMulticast() {
         while (true) {
             Envelope e = msystem.receive();
-            System.out.println("RECIBE msg "+e.getPayload()+" de "+e.getSource()+" con reloj "+e.getLamportClock()+" LC es "+msystem.getLamportClock());
             if (e.getPayload() instanceof REQ) {
                 //Si el proceso esta/espera acceder a SC
                 if (accesoSC) {
@@ -91,13 +72,11 @@ public class TotalOrderMulticast {
                         msystem.send(e.getSource(), new ACK());
                     } else if (e.getLamportClock() > msystem.getLamportClock()) {
                         Pretrasados.add(e.getSource());
-                        System.out.println("encolando: "+e.getSource());
                     } else {
                         if (e.getSource() <= pid) {
                             msystem.send(e.getSource(), new ACK());
                         } else {
                             Pretrasados.add(e.getSource());
-                            System.out.println("encolando: "+e.getSource());
                         }
                     }
                 } else {
@@ -107,7 +86,19 @@ public class TotalOrderMulticast {
                 ackPendientes--;
                 if(ackPendientes==0){
                     mutex.lock();
-                    esperandoACKs.signal();
+                    msystem.setLamportClock(maxLamportClock);
+                    msystem.sendMulticast(msg);
+                    //cuando envia mensaje --> restarua valor ack pendientes
+                    for (int i = 0; i < Pretrasados.size(); i++) {
+                        if (Pretrasados.get(i) != pid) {
+                            msystem.send(Pretrasados.get(i), new ACK());
+                        }
+                    }
+                    Pretrasados.removeAll(Pretrasados); //elimina los elementos pendientes
+                    ackPendientes = msystem.getProcess() - 1;
+                    accesoSC = false;
+                    msystem.setLamportClock(msystem.getLamportClock() + 1);
+                    esperandoEnviar.signal();
                     mutex.unlock();
                 }
             }

@@ -17,14 +17,14 @@ import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 
 
-public class EnvioMasivo {
+public class EscuchaMsg {
 
     private boolean debug;
     private int idP;
     private String fichero;
     private ChatDialog v;
 
-    public EnvioMasivo(boolean debug, int idP, String fichero) {
+    public EscuchaMsg(boolean debug, int idP, String fichero) {
         this.debug = debug;
         this.idP = idP;
         this.fichero = fichero;
@@ -41,43 +41,18 @@ public class EnvioMasivo {
 
         v = new ChatDialog(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-               //No permito escribir en el chat
+               //No permite escribir
             }
         }, idP);
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        try {
-            if(idP==1){
-                Thread.sleep(1000);
-            }else if(idP==2){
-                Thread.sleep(750);
-            }
-            else if(idP==3){
-                Thread.sleep(500);
-            }else{
-                Thread.sleep(250);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        m="";
-        EnviaMsgMasivo enviaC = new EnviaMsgMasivo(t, m, idP);  //envio desde thread
-        enviaC.start();
-
         while(true) {
             Envelope e = t.receiveMulticast();
             //añado mensaje si no es res, ack ni es mio
             if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
                 m = ((MessageValue) e.getPayload()).getValue();
-                if(e.getSource()==idP){
-                    v.addMessage("Yo: " + m);
-                    System.out.println("Yo: " + m);
-                }else{
-                    v.addMessage(e.getSource() +": "+m);
-                    System.out.println(e.getSource() +": "+m);
-                }
+                v.addMessage(e.getSource() +": "+m);
+                System.out.println(e.getSource() +": "+m);
             }
         }
     }
-
 }

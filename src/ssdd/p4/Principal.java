@@ -45,8 +45,13 @@ public class Principal {
         //Elegimos qué proceso se ejecuta según el identificador proporcionado
         try {
             if(prueba){
-                EnvioMasivo e = new EnvioMasivo(debug, idP, fichero);
-                e.lanzarEjecucion();
+                /*if(idP==1 || idP==2){
+                    EscuchaMsg e = new EscuchaMsg(debug, idP, fichero);
+                    e.lanzarEjecucion();
+                }else{*/
+                    EnvioMasivo e = new EnvioMasivo(debug, idP, fichero);
+                    e.lanzarEjecucion();
+                //}
             }
             else{
                 A pA = new A(debug, idP, fichero);

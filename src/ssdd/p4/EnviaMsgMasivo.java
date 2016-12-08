@@ -3,9 +3,9 @@
 * NIA: 686329
 * AUTOR: Beatriz Pérez Cancer
 * NIA: 683546
-* FICHERO: EnviaMsgRunnableC.java
+* FICHERO: EnviaMsgMasivo.java
 * TIEMPO: 0.5h
-* DESCRIPCIÓN: Realiza la llamada el metodo sendMulticast para realizar en envio desde
+* DESCRIPCIÓN: Realiza la llamada el metodo sendMulticast para realizar en 5 envio desde
 *           un thread
 */
 package ssdd.p4;
@@ -31,11 +31,14 @@ public class EnviaMsgMasivo extends Thread{
         Random rnd;
         rnd = new Random((long) pid);
 
-        try {
-            Thread.sleep(rnd.nextInt(500));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        for(int i=0; i<5; i++){
+            try {
+                Thread.sleep(rnd.nextInt(500));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            s = "Proceso " + pid + " : mensaje " + i;
+            t.sendMulticast(new MessageValue(s));
         }
-        t.sendMulticast(new MessageValue(s));
     }
 }
