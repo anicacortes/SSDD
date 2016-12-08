@@ -55,7 +55,7 @@ public class A {
         while(true) {
             Envelope e = t.receiveMulticast();
             //añado mensaje si no es res, ack ni es mio
-            if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
+            if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK) && idP!=e.getSource()){
                 m = ((MessageValue) e.getPayload()).getValue();
                 v.addMessage(e.getSource() +": "+m);
             }
