@@ -59,6 +59,7 @@ public class TotalOrderMulticast {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        msystem.setLamportClock(maxLamportClock);
         msystem.sendMulticast(message);
         //cuando envia mensaje --> restarua valor ack pendientes
         for(int i=0; i<Pretrasados.size(); i++){
@@ -67,9 +68,9 @@ public class TotalOrderMulticast {
                 Pretrasados.remove(i);
             }
         }
+        msystem.setLamportClock(msystem.getLamportClock()+1);
         ackPendientes = msystem.getProcess()-1;
         accesoSC = false;
-        msystem.setLamportClock(maxLamportClock+1);
         esperandoEnviar.signal();
         mutex.unlock();
     }
@@ -104,8 +105,13 @@ public class TotalOrderMulticast {
             }
             else{
                 //Nos quedamos con el valor mayor entre el max reloj y el del mensaje
-                if(e.getLamportClock()>maxLamportClock){
-                    maxLamportClock=e.getLamportClock();
+                if(e.getLamportClock()>=maxLamportClock){
+                    maxLamportClock=e.getLamportClock()+1;
+                }else{
+                    maxLamportClock=msystem.getLamportClock()+1;
+                }
+                if(!accesoSC){
+                    msystem.setLamportClock(maxLamportClock);
                 }
             }
             return e;

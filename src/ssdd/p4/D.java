@@ -39,7 +39,7 @@ public class D {
 			Envelope e = t.receiveMulticast();
 			if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
                 m = ((MessageValue) e.getPayload()).getValue();
-				System.out.println(m);
+				System.out.println(m + " reloj: "+ms.getLamportClock());
             }
 		}
 	}

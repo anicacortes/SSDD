@@ -38,7 +38,7 @@ public class B {
             Envelope e = t.receiveMulticast();
             if(!(e.getPayload() instanceof REQ)){
                 m = ((MessageValue) e.getPayload()).getValue();
-                System.out.println(m);
+                System.out.println(m + " reloj: "+ms.getLamportClock());
             }
         }
     }
