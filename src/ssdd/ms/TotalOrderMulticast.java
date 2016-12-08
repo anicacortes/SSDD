@@ -59,17 +59,21 @@ public class TotalOrderMulticast {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        msystem.setLamportClock(maxLamportClock);
         msystem.sendMulticast(message);
         //cuando envia mensaje --> restarua valor ack pendientes
+        System.out.println("tamaño retrasados: "+Pretrasados.size());
         for(int i=0; i<Pretrasados.size(); i++){
             if(Pretrasados.get(i)!=pid){
+                System.out.println("despierto a "+Pretrasados.get(i));
                 msystem.send(Pretrasados.get(i),new ACK());
-                Pretrasados.remove(i);
+                //Pretrasados.remove(i);
             }
         }
+        Pretrasados.removeAll(Pretrasados); //elimina los elementos pendientes
         ackPendientes = msystem.getProcess()-1;
         accesoSC = false;
-        msystem.setLamportClock(maxLamportClock+1);
+        msystem.setLamportClock(msystem.getLamportClock()+1);
         esperandoEnviar.signal();
         mutex.unlock();
     }
@@ -77,6 +81,7 @@ public class TotalOrderMulticast {
     public Envelope receiveMulticast() {
         while (true) {
             Envelope e = msystem.receive();
+            System.out.println("RECIBE msg "+e.getPayload()+" de "+e.getSource()+" con reloj "+e.getLamportClock()+" LC es "+msystem.getLamportClock());
             if (e.getPayload() instanceof REQ) {
                 //Si el proceso esta/espera acceder a SC
                 if (accesoSC) {
@@ -84,11 +89,13 @@ public class TotalOrderMulticast {
                         msystem.send(e.getSource(), new ACK());
                     } else if (e.getLamportClock() > msystem.getLamportClock()) {
                         Pretrasados.add(e.getSource());
+                        System.out.println("encolando: "+e.getSource());
                     } else {
                         if (e.getSource() <= pid) {
                             msystem.send(e.getSource(), new ACK());
                         } else {
                             Pretrasados.add(e.getSource());
+                            System.out.println("encolando: "+e.getSource());
                         }
                     }
                 } else {
@@ -104,8 +111,13 @@ public class TotalOrderMulticast {
             }
             else{
                 //Nos quedamos con el valor mayor entre el max reloj y el del mensaje
-                if(e.getLamportClock()>maxLamportClock){
-                    maxLamportClock=e.getLamportClock();
+                if(e.getLamportClock()>=maxLamportClock){
+                    maxLamportClock=e.getLamportClock()+1;
+                }else{
+                    maxLamportClock=msystem.getLamportClock()+1;
+                }
+                if(!accesoSC){
+                    msystem.setLamportClock(maxLamportClock);
                 }
             }
             return e;

@@ -17,11 +17,18 @@ public class Principal {
     private static boolean debug;
     private static int idP;
     private static String fichero;
+    private static boolean prueba = false;
 
     public static void main (String[]args) {
 
         //Inicializamos los atributos con los parametros de la ejecucion
-        if(args.length == 3 && args[0].equals("-d")) {
+        if(args.length == 4 && args[0].equals("-d") && args[3].equals("-p")){
+            debug = true;
+            idP = Integer.parseInt(args[1]);
+            fichero = args[2];
+            prueba = true;
+        }
+        else if(args.length == 3 && args[0].equals("-d")) {
             debug = true;
             idP = Integer.parseInt(args[1]);
             fichero = args[2];
@@ -37,23 +44,14 @@ public class Principal {
 
         //Elegimos qué proceso se ejecuta según el identificador proporcionado
         try {
-            switch (idP) {
-                case 1:
-                    A pA = new A(debug, idP, fichero);
-                    pA.lanzarEjecucion();
-                    break;
-                case 2:
-                    A pB = new A(debug, idP, fichero);
-                    pB.lanzarEjecucion();
-                    break;
-                case 3:
-                    A pC = new A(debug, idP, fichero);
-                    pC.lanzarEjecucion();
-                    break;
-                case 4:
-                    A pD = new A(debug, idP, fichero);
-                    pD.lanzarEjecucion();
-                    break;
+
+            if(prueba){
+                EnvioMasivo e = new EnvioMasivo(debug, idP, fichero);
+                e.lanzarEjecucion();
+            }
+            else{
+                A pA = new A(debug, idP, fichero);
+                pA.lanzarEjecucion();
             }
         }
         catch(FileNotFoundException e) {

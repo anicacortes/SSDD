@@ -17,14 +17,14 @@ import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 
 
-public class A {
+public class EnvioMasivo {
 
     private boolean debug;
     private int idP;
     private String fichero;
     private ChatDialog v;
 
-    public A(boolean debug, int idP, String fichero) {
+    public EnvioMasivo(boolean debug, int idP, String fichero) {
         this.debug = debug;
         this.idP = idP;
         this.fichero = fichero;
@@ -41,18 +41,39 @@ public class A {
 
         v = new ChatDialog(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String m = v.text();    //coge texto del campo
-                if(!m.equals("")){
-                    EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t,m);  //envio desde thread
-                    enviaC.start();
-                    if (!m.isEmpty()) {
-                        v.addMessage("Yo: " + m);
-                    }
-                }
+               //
             }
         }, idP);
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        try {
+            if(idP==1){
+                Thread.sleep(1000);
+            }else if(idP==2){
+                Thread.sleep(750);
+            }else if(idP==3){
+                Thread.sleep(500);
+            }else{
+                Thread.sleep(250);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        /*for(int i=0;i<5;i++){
+            m="Proceso " +idP+" : mensaje "+i;
+            EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t,m);  //envio desde thread
+            enviaC.start();
+            v.addMessage("Yo: " + m);
+        }*/
+        int nMensaje=0;
         while(true) {
+            if(nMensaje<5) {
+                m = "Proceso " + idP + " : mensaje " + nMensaje;
+                EnviaMsgRunnableC enviaC = new EnviaMsgRunnableC(t, m);  //envio desde thread
+                enviaC.start();
+                v.addMessage("Yo: " + m);
+                nMensaje++;
+            }
             Envelope e = t.receiveMulticast();
             //añado mensaje si no es res, ack ni es mio
             if(!(e.getPayload() instanceof REQ) && !(e.getPayload() instanceof ACK)){
