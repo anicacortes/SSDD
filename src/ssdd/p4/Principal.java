@@ -44,7 +44,6 @@ public class Principal {
 
         //Elegimos qué proceso se ejecuta según el identificador proporcionado
         try {
-
             if(prueba){
                 EnvioMasivo e = new EnvioMasivo(debug, idP, fichero);
                 e.lanzarEjecucion();

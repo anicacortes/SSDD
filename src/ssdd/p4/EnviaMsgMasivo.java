@@ -13,16 +13,29 @@ package ssdd.p4;
 import ssdd.ms.MessageValue;
 import ssdd.ms.TotalOrderMulticast;
 
+import java.util.Random;
+
 public class EnviaMsgMasivo extends Thread{
 
     private TotalOrderMulticast t;
     private String s;
-    public EnviaMsgMasivo(TotalOrderMulticast tom, String p){
+    private int pid;
+
+    public EnviaMsgMasivo(TotalOrderMulticast tom, String p, int i){
         t = tom;
         s = p;
+        pid = i;
     }
 
     public void run() {
+        Random rnd;
+        rnd = new Random((long) pid);
+
+        try {
+            Thread.sleep(rnd.nextInt(500));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         t.sendMulticast(new MessageValue(s));
     }
 }

@@ -57,11 +57,17 @@ public class MessageSystem {
      * son mensajes de request o ack. En caso de ser otro tipo de mensajes, se lo envia a si mismo tambien.
 	 */
 	public void sendMulticast(Serializable message){
-		for(int i=1; i<=addresses.size(); i++){
-			if(pid!=i){
-				send(i,message);
-			}
-		}
+        if(!(message instanceof REQ) && !(message instanceof ACK)) {
+            for (int i = 1; i <= addresses.size(); i++) {
+                send(i, message);
+            }
+        }else{
+            for (int i = 1; i <= addresses.size(); i++) {
+                if (pid != i) {
+                    send(i, message);
+                }
+            }
+        }
 	}
 
     /**
