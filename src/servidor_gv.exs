@@ -8,20 +8,21 @@ defmodule ServidorGV do
     # COMPLETAR  con lo campos necesarios para gestionar
     # el estado del gestor de vistas
 
-    defstruct  ????   # A COMPLETAR
+    #numVista,idPrimario,idCopia
+    defstruct  vistaValida: {0,0,0}, vistaTentativa: {0,0,0}
 
     @tiempo_espera_carga_remota 1000
 
     @periodo_latido 50
 
-    @latidos_fallidos 4
+    @latidos_fallidos 4 #4 o 5 latidos fallidos?
 
 
    @doc """
-        Generar un estructura de datos vista inicial
+        Generar una estructura de datos vista inicial
     """
     def vista_inicial() do
-        %ServidorGV{}
+        %ServidorGV{vistaValida: {0,0,0}, vistaTentativa: {0,0,0}}
     end
 
     @doc """
@@ -29,7 +30,7 @@ defmodule ServidorGV do
     """
     @spec start(String.t, String.t) :: atom
     def start(host, nombre_nodo) do
-        nodo = NodoRemoto.start(host, nombre_nodo,_ENV__.file,
+        nodo = NodoRemoto.start(host, nombre_nodo,__ENV__.file,
                                 __MODULE__)
 
         Node.spawn(nodo, __MODULE__, :init_sv, [])
@@ -47,8 +48,9 @@ defmodule ServidorGV do
         spawn(__MODULE__, :init_monitor, [self()]) # otro proceso concurrente
 
         #### VUESTRO CODIGO DE INICIALIZACION
+        vista_inicial() #Llamar al metodo de inicio
 
-        bucle_recepcion(??????????)
+        bucle_recepcion()
     end
 
     def init_monitor(pid_principal) do
@@ -58,7 +60,7 @@ defmodule ServidorGV do
     end
 
 
-    defp bucle_recepcion(???????????) do
+    defp bucle_recepcion(vistaTentativa?) do
         ?????? = receive do
                     {:latido, nodo_origen, n_vista} ->
                 
@@ -79,7 +81,15 @@ defmodule ServidorGV do
 
     defp procesar_situacion_servidores() do
 
-        #### VUESTRO CODIGO
+
+
+#
+#        vista = %ServidorGV         #vista tiene el struct de las dos vistas
+#
+#        #comprueba si el idPrimario es 0(si no hay primario)
+#        if elem(vista.vistaValida,1) == 0 do
+#
+#        end
         
     end
 end

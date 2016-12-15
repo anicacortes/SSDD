@@ -45,7 +45,7 @@ defmodule  GestorVistasTest do
 
 
     # Primer test : un primer primario
-    test "primario_prematuro", %{c1: c1} do
+    test "Primario prematuro", %{c1: c1} do
         IO.puts("Test: Primario prematuro ...")
 
         p = ClienteGV.primario(c1)
@@ -57,33 +57,58 @@ defmodule  GestorVistasTest do
 
 
     # Segundo test : primer nodo copia
-    test "primer_primario", %{c1: c} do
+    test "Primer primario", %{c1: c} do
         IO.puts("Test: Primer primario ...")
 
         primer_primario(c, @latidos_fallidos * 2)
-        comprobar(c, c, :undefined, 1)
+        comprobar_tentativa(c, c, :undefined, 1)
         
         IO.puts(" ... Superado")
     end
 
 
-    # 
-    test "primer_nodo_copia", %{c1: c1, c2: c2} do
+    # Tercer test primer_nodo_copia
+    test "Primer nodo copia", %{c1: c1, c2: c2} do
         IO.puts("Test: Primer nodo copia ...")
 
-        {vista, _is_ok} = ClienteGV.obten_vista(c1)
+        {vista, _} = ClienteGV.latido(c1, -1)  # Solo interesa vista tentativa
         primer_nodo_copia(c1, c2, @latidos_fallidos * 2)
-        comprobar(c1, c1, c2, vista.num_vista + 1)
+
+        # validamos nueva vista por estar completa
+        ClienteGV.latido(c1, vista.num_vista + 1)
+
+        comprobar_valida(c1, c1, c2, vista.num_vista + 1)
 
         IO.puts(" ... Superado")
     end
 
 
-    ## Test 3 : Después, Copia (C2) toma el relevo si Primario falla.
-    # relevo_copia(C1, C2),
+    ## Test 3 : Después, Copia (C2) toma el relevo si Primario falla.,
+    test "Copia releva primario", %{c2: c2} do
+        IO.puts("Test: copia toma relevo si primario falla ...")
+
+        {vista, _} = ClienteGV.latido(c2, 2)
+        copia_releva_primario(c2, vista.num_vista, @latidos_fallidos * 2)
+        
+        comprobar_tentativa(c2, c2, :undefined, vista.num_vista + 1)
+
+        IO.puts(" ... Superado")        
+    end
 
     ## Test 4 : Servidor rearrancado (C1) se convierte en copia.
-    # relevo_copia(C1, C2),
+    test "Servidor rearrancado se conviert en copia", %{c1: c1, c2: c2} do
+        IO.puts("Test: Servidor rearrancado se conviert en copia ...")
+
+        {vista, _} = ClienteGV.latido(c2, 2)   # Solo interesa vista tentativa
+        servidor_rearranca_a_copia(c1, c2, 2, @latidos_fallidos * 2)
+
+        # validamos nueva vista por estar DE NUEVO completa
+        ClienteGV.latido(c2, vista.num_vista + 1)
+
+        comprobar_valida(c2, c2, c1, vista.num_vista + 1)
+
+        IO.puts(" ... Superado")
+     end
 
     ## Test 5 : 3er servidor en espera (C3) se convierte en copia
     ##          si primario falla.
@@ -108,7 +133,8 @@ defmodule  GestorVistasTest do
 
     defp primer_primario(_c, 0) do :fin end
     defp primer_primario(c, x) do
-        {vista, _is_ok} = ClienteGV.latido(c, 0)
+
+        {vista, _} = ClienteGV.latido(c, 0)
 
         if vista.primario != c do
             Process.sleep(@intervalo_latido)
@@ -118,8 +144,10 @@ defmodule  GestorVistasTest do
 
     defp primer_nodo_copia(_c1, _c2, 0) do :fin end
     defp primer_nodo_copia(c1, c2, x) do
-        ClienteGV.latido(c1, 1)
-        {vista, _is_ok} = ClienteGV.latido(c2, 0)
+
+        # != 0 para no dar por nuevo y < 0 para no validar
+        ClienteGV.latido(c2, -1)  
+        {vista, _} = ClienteGV.latido(c2, 0)
 
         if vista.copia != c2 do
             Process.sleep(@intervalo_latido)
@@ -127,17 +155,54 @@ defmodule  GestorVistasTest do
         end
     end
 
+    def copia_releva_primario( _, _num_vista_inicial, 0) do :fin end
+    def copia_releva_primario(c2, num_vista_inicial, x) do
 
-    defp comprobar(nodo_cliente, nodo_primario, nodo_copia, num_vista) do
-        {vista, _is_ok} = ClienteGV.obten_vista(nodo_cliente)
+        {vista, _} = ClienteGV.latido(c2, num_vista_inicial)
 
+        if (vista.primario != c2) or (vista.copia != :undefined) do
+            Process.sleep(@intervalo_latido)
+            copia_releva_primario(c2, num_vista_inicial, x - 1)
+        end
+
+    end
+
+    defp servidor_rearranca_a_copia(_c1, _c2, _num_vista_inicial, 0) do :fin end
+    defp servidor_rearranca_a_copia(c1, c2, num_vista_valida, x) do
+
+        ClienteGV.latido(c1, 0)
+        {vista, _} = ClienteGV.latido(c2, num_vista_valida)
+
+        if vista.copia != c1 do
+            Process.sleep(@intervalo_latido)
+            primer_nodo_copia(c1, c2, x - 1)
+        end
+    end
+
+
+    defp comprobar_tentativa(nodo_cliente, nodo_primario, nodo_copia, n_vista) do
+        # Solo interesa vista tentativa
+        {vista, _} = ClienteGV.latido(nodo_cliente, -1) 
+
+        comprobar(nodo_primario, nodo_copia, n_vista, vista)        
+    end
+
+
+    defp comprobar_valida(nodo_cliente, nodo_primario, nodo_copia, n_vista) do
+        {vista, _ } = ClienteGV.obten_vista(nodo_cliente)
+
+        comprobar(nodo_primario, nodo_copia, n_vista, vista)
+
+        assert ClienteGV.primario(nodo_cliente) == nodo_primario
+    end
+
+
+    defp comprobar(nodo_primario, nodo_copia, n_vista, vista) do
         assert vista.primario == nodo_primario 
 
         assert vista.copia == nodo_copia 
 
-        assert vista.num_vista == num_vista 
-
-        assert ClienteGV.primario(nodo_cliente) == nodo_primario
+        assert vista.num_vista == n_vista 
     end
 
 

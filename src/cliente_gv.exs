@@ -105,8 +105,8 @@ defmodule ClienteGV do
     defp procesa_obten_vista(nodo_servidor_gv, pid_maestro) do
        send({:servidor_gv, nodo_servidor_gv}, {:obten_vista, self()})
 
-        receive do   {:vista_valida, vista} -> 
-                        send(pid_maestro, {:vista_valida, vista, true})
+        receive do   {:vista_valida, vista, coincide?} -> 
+                        send(pid_maestro, {:vista_valida, vista, coincide?})
         after @tiempo_espera_de_respuesta ->
                     send(pid_maestro, {:vista_valida,
                                         ServidorGV.vista_inicial(), false})
