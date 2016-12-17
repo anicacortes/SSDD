@@ -79,9 +79,10 @@ defmodule ServidorGV do
         bucle_recepcion(nueva_vista)
     end
 
+    #proceso cansino
     defp procesar_situacion_servidores() do
 
-
+        latido(nodo,obten_vista())
 
 #
 #        vista = %ServidorGV         #vista tiene el struct de las dos vistas

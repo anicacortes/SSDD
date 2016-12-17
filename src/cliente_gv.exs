@@ -93,19 +93,20 @@ defmodule ClienteGV do
         send({:servidor_gv, nodo_servidor_gv}, {:latido, Node.self(), num_vista})
 
         # esperar respuesta del ping
-        receive do  {:vista_tentativa, vista, encontrado?} -> 
+        receive do  {:vista_tentativa, vista, encontrado?} ->  #wtf es encontrado?
                         send(pid_maestro, {:vista_tentativa, vista, encontrado?})
         after @tiempo_espera_de_respuesta ->
                     send(pid_maestro, {:vista_tentativa,
-                                        ServidorGV.vista_inicial(), false})
-        end     
+                                        ServidorGV.vista_inicial(), false}) #pone a 0 la vista del nodo o del servidor?
+        end
     end
 
 
+#es cuando un nodo se incorpora? para pedir la vista actual? send ping 0
     defp procesa_obten_vista(nodo_servidor_gv, pid_maestro) do
        send({:servidor_gv, nodo_servidor_gv}, {:obten_vista, self()})
 
-        receive do   {:vista_valida, vista, coincide?} -> 
+        receive do   {:vista_valida, vista, coincide?} -> #si coincide la vista tentativa y la valida
                         send(pid_maestro, {:vista_valida, vista, coincide?})
         after @tiempo_espera_de_respuesta ->
                     send(pid_maestro, {:vista_valida,
