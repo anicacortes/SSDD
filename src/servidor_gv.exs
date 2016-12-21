@@ -11,7 +11,8 @@ defmodule ServidorGV do
     #numVista,idPrimario,idCopia
     defstruct  vistaValida: %{numVista: 0, primario: :undefined, copia: :undefined},
             vistaTentativa: %{numVista: 0, primario: :undefined, copia: :undefined},
-            nodosEspera: []
+            #nodosEspera: [],
+            situacion_servidores: %{:latidosP => 0, :fallosP => 0, :latidosC => 0, :fallosC => 0} #map estado servidores
 
     @type t_vista :: %{numVista: integer, primario: node, copia: node}
 
@@ -66,63 +67,107 @@ defmodule ServidorGV do
 
 
     defp bucle_recepcion(nueva_vista) do
-        vista = receive do
+    #esa vista devuelta es la actualizada en el metodo?
+        nueva_vista = receive do
                    {:latido, nodo_origen, n_vista} ->
                         ### VUESTRO CODIGO
-                        procesa_latido(nodo_origen, n_vista, nueva_vista)
-                        send(nodo_origen,{:vista_tentativa, nueva_vista.vistaTentativa, true})
+                        nueva_vista = procesa_latido(nodo_origen, n_vista, nueva_vista)
+                        if(nodo_origen == nueva_vista.vistaTentativa.primario) do
+                            %{map | latidosP: 1} #1 o mas, como sumarlo?
+                        else if(nodo_origen == nueva_vista.vistaTentativa.primario)
+                            %{map | latidosC: 1} #1 o mas
+                        end
+                        send(nodo_origen,{:vista_tentativa, nueva_vista.vistaTentativa,
+                        nueva_vista.vistaValida.numVista==n_vista})
+                        nueva_vista #para devolverlo
                 
                    {:obten_vista, pid} ->
                         ### VUESTRO CODIGO
-                        if nueva_vista.primario == :undefined do
+                        if nueva_vista.vistaValida.primario == :undefined do
                             IO.puts "primario indefinido"
                             send(pid, {:vista_valida, nueva_vista.vistaValida, false})
                         else
-                            send(pid, {:vista_valida, nueva_vista.vistaValida, true})
+                            send(pid, {:vista_valida, nueva_vista.vistaValida,
+                            nueva_vista.vistaValida.numVista==nueva_vista.vistaTentativa.numVista})
                         end
                    :procesa_situacion_servidores ->
-                
                         ### VUESTRO CODIGO
-                        {}
-
+                        todoBien = procesar_situacion_servidores(nueva_vista)
         end
 
-        bucle_recepcion(nueva_vista)
+        bucle_recepcion(nueva_vista) #ponerlo en el latido y obten_vista para q pueda parar el procesa?
     end
 
     defp procesa_latido(nodo_origen, n_vista, nueva_vista) do
-    if n_vista==0 do
-        #Si no hay primario y llega nodo nuevo --> nuevo primario
-        if nueva_vista.vistaTentativa.primario==:undefined do
-          nueva_vista.vistaTentativa.primario=nodo_origen
-          nueva_vista.vistaTentativa.numVista=nueva_vista.vistaTentativa.numVista+1
-          #Si hay primario pero no copia y llega nodo nuevo --> nuevo copia
-        else if nueva_vista.vistaTentativa.copia==:undefined
-          nueva_vista.vistaTentativa.copia=nodo_origen
-          nueva_vista.vistaTentativa.numVista=nueva_vista.vistaTentativa.numVista+1
-        else
-          nueva_vista.vistaTentativa.nodosEspera++[nodo_origen]
+        if n_vista==0 do
+            #Si no hay primario y llega nodo nuevo --> nuevo primario
+            if nueva_vista.vistaTentativa.primario==:undefined do
+              nueva_vista.vistaTentativa.primario=nodo_origen
+              nueva_vista.vistaTentativa.numVista=nueva_vista.vistaTentativa.numVista+1
+              #Si hay primario pero no copia y llega nodo nuevo --> nuevo copia
+            else if nueva_vista.vistaTentativa.copia==:undefined
+              nueva_vista.vistaTentativa.copia=nodo_origen
+              nueva_vista.vistaTentativa.numVista=nueva_vista.vistaTentativa.numVista+1
+              #Llegada la copia, ya la vista es valida SOLAMENTE para el primario
+              nueva_vista.vistaValida = nueva_vista.vistaTentativa
+            #else
+              #nueva_vista.vistaTentativa.nodosEspera++[nodo_origen]
+            end
+        else if n_vista<>-1
+            #La vista que llega es igual que nuestra tentativa pero superior a la valida
+           #if n_vista<>nueva_vista.vistaValida.numVista and n_vista==nueva_vista.vistaTentativa.numVista do ES REDUNDANTE?
+           if n_vista<>nueva_vista.vistaValida.numVista and nueva_vista.vistaTentativa.copia==nodo_origen do #esto lo hace solo la copia
+               nueva_vista.vistaValida = nueva_vista.vistaTentativa
+               #si no hay copia y un nodo secundario manda un latido, se coloca como copia(porq ha habido fallo)
+           else if n_vista <> nueva_vista.vistaValida.numVista and nueva_vista.vistaTentativa.copia==:undefined
+                nueva_vista.vistaTentativa.copia = nodo_origen
+           end
         end
-    else if n_vista<>-1
-        #Cuando se valida una vista
-       if n_vista<>nueva_vista.vistaValida.numVista and n_vista==nueva_vista.vistaTentativa.numVista do
-           nueva_vista.vistaValida = nueva_vista.vistaTentativa
-       end
-    end
+        nueva_vista
     end
 
-    #proceso cansino
-    defp procesar_situacion_servidores() do
+    #proceso cansino cada 50 ms
+    defp procesar_situacion_servidores(nueva_vista) do
+        if (map.latidosP > 0) do
+            %{map | latidosP: 0}
+        else
+            %{map | fallosP: 1}
+        end
+        if (map.latidosC > 0) do
+            %{map | latidosC: 0}
+        else
+            %{map | fallosC: 1}
+        end
+        if (map.fallosP == @latidos_fallidos) do
+            {nueva_vista, todoBien} = falloPrimario(nueva_vista)
+        else if(map.fallosC == @latidos_fallidos)
+            {nueva_vista, todoBien} = falloCopia(nueva_vista)
+        end
+    end
 
-        latido(nodo,obten_vista())
+    defp falloPrimario(nueva_vista) do
+        #ERROR CRITICO -> PERDIDA DATOS
+        {nueva_vista, todoBien} = cond do
+            nueva_vista.vistaTentativa <> nueva_vista.vistaValida ->
+                #STOP TODO
+                #todoBien = false
+                {nueva_vista, false}
+            nueva_vista.vistaTentativa.copia == :undefined ->
+                {nueva_vista, false}
+            true ->
+                nueva_vista.vistaTentativa.numVista+1
+                #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
+                nueva_vista.vistaTentativa.primario = nueva_vista.vistaTentativa.copia
+                nueva_vista.vistaTentativa.copia = :undefined
+                {nueva_vista, true}
+            end
+    end
 
-#
-#        vista = %ServidorGV         #vista tiene el struct de las dos vistas
-#
-#        #comprueba si el idPrimario es 0(si no hay primario)
-#        if elem(vista.vistaValida,1) == 0 do
-#
-#        end
-        
+    defp falloCopia(nueva_vista) do
+      nueva_vista.vistaTentativa.numVista+1
+      #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
+      nueva_vista.vistaTentativa.copia = :undefined
+
+      {nueva_vista,true}
     end
 end
