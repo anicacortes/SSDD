@@ -28,6 +28,7 @@ defmodule  GestorVistasTest do
         c3 = :"c3@127.0.0.1"
         sv = ServidorGV.start(@host1, "sv")
         c1 = ClienteGV.start(@host1, "c1", sv)
+        IO.puts("cliente C1 #{c1}")
         c2 = ClienteGV.start(@host1, "c2", sv)
         #c3 = ClienteGV.start(@host1, "c3", sv)
 
@@ -135,7 +136,7 @@ defmodule  GestorVistasTest do
     defp primer_primario(c, x) do
 
         {vista, _} = ClienteGV.latido(c, 0)
-
+        IO.puts("PRIMER PRIMARIO: numVista #{vista.num_vista} primario #{vista.primario} copia #{vista.copia}")
         if vista.primario != c do
             Process.sleep(@intervalo_latido)
             primer_primario(c, x - 1)
@@ -183,7 +184,7 @@ defmodule  GestorVistasTest do
     defp comprobar_tentativa(nodo_cliente, nodo_primario, nodo_copia, n_vista) do
         # Solo interesa vista tentativa
         {vista, _} = ClienteGV.latido(nodo_cliente, -1) 
-
+        IO.puts("COMP TENTATIVA: numVista #{vista.num_vista} primario #{vista.primario} copia #{vista.copia}")
         comprobar(nodo_primario, nodo_copia, n_vista, vista)        
     end
 
@@ -198,11 +199,12 @@ defmodule  GestorVistasTest do
 
 
     defp comprobar(nodo_primario, nodo_copia, n_vista, vista) do
+        IO.puts("nodoPrimario #{nodo_primario} vistaPrimario #{vista.primario}")
         assert vista.primario == nodo_primario 
 
         assert vista.copia == nodo_copia 
 
-        assert vista.num_vista == n_vista 
+        assert vista.num_vista == n_vista
     end
 
 

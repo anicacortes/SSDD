@@ -8,13 +8,13 @@ defmodule ServidorGV do
     # COMPLETAR  con lo campos necesarios para gestionar
     # el estado del gestor de vistas
 
-    #numVista,idPrimario,idCopia
-    defstruct  vistaValida: %{numVista: 0, primario: :undefined, copia: :undefined},
-            vistaTentativa: %{numVista: 0, primario: :undefined, copia: :undefined},
+    #num_vista,idPrimario,idCopia
+    defstruct  vistaValida: %{num_vista: 0, primario: :undefined, copia: :undefined},
+            vistaTentativa: %{num_vista: 0, primario: :undefined, copia: :undefined},
             #nodosEspera: [],
             situacionServidores: %{:latidosGV => 0} #map estado servidores
             #"latidosP" => 0, "latidosC" => 0
-    @type t_vista :: %{numVista: integer, primario: node, copia: node}
+    @type t_vista :: %{num_vista: integer, primario: node, copia: node}
 
     @tiempo_espera_carga_remota 1000
 
@@ -71,17 +71,17 @@ defmodule ServidorGV do
         nueva_vista = receive do
            {:latido, nodo_origen, n_vista} ->
                 IO.puts("Recibo latido...")
-                ### VUESTRO CODIGO
+                IO.puts("BUcLE RECEPCION: num_vista #{vista.vistaTentativa.num_vista} primario #{vista.vistaTentativa.primario} copia #{vista.vistaTentativa.copia}")
                 #nueva_vista = procesa_latido(nodo_origen, n_vista, vista)
-
-                IO.puts("Antes #{Map.get(vista.situacionServidores, :latidosGV)}")
-
                 #valor =  Map.get(vista.situacionServidores, :latidosGV) + 1
                 #Meter un nodo en la lista que gestiona los latidos (tambien se meten lo q quedan en espera)
                 nueva_situacionServidores = Map.put(vista.situacionServidores, nodo_origen, Map.get(vista.situacionServidores, :latidosGV) + 1)
                 #nueva_situacionServidores = %{vista.situacionServidores | nodo_origen => vista.situacionServidores[:latidosGV]+1}
-                %{vista | situacionServidores: nueva_situacionServidores}
-
+                nuevaVista = %{vista | situacionServidores: nueva_situacionServidores}
+                nuevaV = procesa_latido(nodo_origen, n_vista, nuevaVista)
+                IO.puts("DESPUES PROC_LATIDO: vistaTentativa: #{Map.get(nuevaV.vistaTentativa, :num_vista)} primario #{Map.get(nuevaV.vistaTentativa, :primario)}")
+                send({:cliente_gv, nodo_origen}, {:vista_tentativa, nuevaV.vistaTentativa, true})
+                nuevaV
 #                cond do
 #                  nodo_origen == nueva_vista.vistaTentativa.primario ->
 #                    valor = Map.get(nueva_vista.situacionServidores, "latidosP")
@@ -103,7 +103,7 @@ defmodule ServidorGV do
 #                    // nueva_vista = %{nueva_vista | v_tentativa: tentativa}
 #                end
 #                send(nodo_origen,{:vista_tentativa, nueva_vista.vistaTentativa,
-#                nueva_vista.vistaValida.numVista==n_vista})
+#                nueva_vista.vistaValida.num_vista==n_vista})
 #                nueva_vista #para devolverlo
 
            {:obten_vista, pid} ->
@@ -113,58 +113,63 @@ defmodule ServidorGV do
                     send(pid, {:vista_valida, vista.vistaValida, false})
                 else
                     send(pid, {:vista_valida, vista.vistaValida,
-                    vista.vistaValida.numVista==vista.vistaTentativa.numVista})
+                    vista.vistaValida.num_vista==vista.vistaTentativa.num_vista})
                 end
                 vista
            :procesa_situacion_servidores ->
                 ### VUESTRO CODIGO
                 procesar_situacion_servidores(vista)
         end
-
         bucle_recepcion(nueva_vista) #ponerlo en el latido y obten_vista para q pueda parar el procesa?
     end
 
     defp procesa_latido(nodo_origen, n_vista, vista) do
         #Asignar el numero de latidos + 1 del GV en el nodo q envia latido -> evitar desfases (justo antes del 4 latido sin enviar
         #envia uno, contar desde entonces el tiempo! no desde el servidor)
-        case n_vista do
-          0 ->
+        cond do
+          n_vista==0 ->
             cond do
-              vista.vistaTentativa.primario==:undefined ->
-                    IO.puts("Antes numvista: #{Map.get(vista.vistaTentativa, :numVista)} primario #{Map.get(vista.vistaTentativa, :primario)}")
-                    nuevaVistaT = %{vista.vistaTentativa | numVista: Map.get(vista.vistaTentativa, :numVista) + 1, primario: nodo_origen}
+              vista.vistaTentativa.primario == :undefined ->
+                    IO.puts("Antes num_vista: #{Map.get(vista.vistaTentativa, :num_vista)} primario #{Map.get(vista.vistaTentativa, :primario)}")
+                    nuevaVistaT = %{vista.vistaTentativa | num_vista: Map.get(vista.vistaTentativa, :num_vista) + 1, primario: nodo_origen}
                     vistaN = %{vista | vistaTentativa: nuevaVistaT}
-                    IO.puts("Despues numvista: #{Map.get(vistaN.vistaTentativa, :numVista)} primario #{Map.get(vistaN.vistaTentativa, :primario)}")
+                    IO.puts("Despues num_vista: #{Map.get(vistaN.vistaTentativa, :num_vista)} primario #{Map.get(vistaN.vistaTentativa, :primario)}")
                     vistaN
-              vista.vistaTentativa.copia==:undefined ->
+              vista.vistaTentativa.copia == :undefined ->
                     #La vista se valida porque existe primario y copia
-                    IO.puts("Antes numvista: #{Map.get(vista.vistaTentativa, :numVista)} copia #{Map.get(vista.vistaTentativa, :copia)}")
-                    nuevaVistaT = %{vista.vistaTentativa | numVista: Map.get(vista.vistaTentativa, :numVista) + 1, copia: nodo_origen}
+                    IO.puts("Antes num_vista: #{Map.get(vista.vistaTentativa, :num_vista)} copia #{Map.get(vista.vistaTentativa, :copia)}")
+                    nuevaVistaT = %{vista.vistaTentativa | num_vista: Map.get(vista.vistaTentativa, :num_vista) + 1, copia: nodo_origen}
                     vistaN = %{vista | vistaTentativa: nuevaVistaT}
                     vistaN = %{vistaN | vistaValida: nuevaVistaT}
-                    IO.puts("Despues numvista: #{Map.get(vistaN.vistaTentativa, :numVista)} copia #{Map.get(vistaN.vistaTentativa, :copia)}")
+                    IO.puts("Despues num_vista: #{Map.get(vistaN.vistaTentativa, :num_vista)} copia #{Map.get(vistaN.vistaTentativa, :copia)}")
                     vistaN
+              true ->
+                    vista
             end
-          ^-1 ->
+          n_vista != -1 ->
             cond do
               #validar la vista despues de hacer la copia de los datos
-              n_vista!=vista.vistaValida.numVista and vista.vistaTentativa.primario==nodo_origen -> #esto lo hace solo la copia
-                    IO.puts("VALIDAR vista tras fallo ANTES: numvistaT: #{Map.get(vista.vistaValida, :numVista)} primario #{Map.get(vista.vistaValida, :primario)}")
+              n_vista != vista.vistaValida.num_vista and vista.vistaTentativa.primario == nodo_origen -> #esto lo hace solo la copia
+                    IO.puts("VALIDAR vista tras fallo ANTES: num_vistaT: #{Map.get(vista.vistaValida, :num_vista)} primario #{Map.get(vista.vistaValida, :primario)}")
                     nuevaVista = %{vista | vistaValida: Map.get(vista, :vistaTentativa)}
-                    IO.puts("VALIDAR vista tras fallo DESPUES: numvistaT: #{Map.get(nuevaVista.vistaValida, :numVista)} primario #{Map.get(nuevaVista.vistaValida, :primario)}")
+                    IO.puts("VALIDAR vista tras fallo DESPUES: num_vistaT: #{Map.get(nuevaVista.vistaValida, :num_vista)} primario #{Map.get(nuevaVista.vistaValida, :primario)}")
                     nuevaVista
+              true ->
+                     vista
             end
+          true ->
+            vista
           end
     end
 #        if n_vista==0 do
 #            #Si no hay primario y llega nodo nuevo --> nuevo primario
 #            if nueva_vista.vistaTentativa.primario==:undefined do
 #              nueva_vista.vistaTentativa.primario=nodo_origen
-#              nueva_vista.vistaTentativa.numVista=nueva_vista.vistaTentativa.numVista+1
+#              nueva_vista.vistaTentativa.num_vista=nueva_vista.vistaTentativa.num_vista+1
 #              #Si hay primario pero no copia y llega nodo nuevo --> nuevo copia
 #            else if nueva_vista.vistaTentativa.copia==:undefined
 #              nueva_vista.vistaTentativa.copia=nodo_origen
-#              nueva_vista.vistaTentativa.numVista=nueva_vista.vistaTentativa.numVista+1
+#              nueva_vista.vistaTentativa.num_vista=nueva_vista.vistaTentativa.num_vista+1
 #              #Llegada la copia, ya la vista es valida SOLAMENTE para el primario
 #              nueva_vista.vistaValida = nueva_vista.vistaTentativa
 #              nueva_
@@ -173,11 +178,11 @@ defmodule ServidorGV do
 #            end
 #        else if n_vista!=-1
             #La vista que llega es igual que nuestra tentativa pero superior a la valida
-           #if n_vista!=nueva_vista.vistaValida.numVista and n_vista==nueva_vista.vistaTentativa.numVista do ES REDUNDANTE?
-#           if n_vista!=nueva_vista.vistaValida.numVista and nueva_vista.vistaTentativa.copia==nodo_origen do #esto lo hace solo la copia
+           #if n_vista!=nueva_vista.vistaValida.num_vista and n_vista==nueva_vista.vistaTentativa.num_vista do ES REDUNDANTE?
+#           if n_vista!=nueva_vista.vistaValida.num_vista and nueva_vista.vistaTentativa.copia==nodo_origen do #esto lo hace solo la copia
 #               nueva_vista.vistaValida = nueva_vista.vistaTentativa
 #               #si no hay copia y un nodo secundario manda un latido, se coloca como copia(porq ha habido fallo)
-#           else if n_vista != nueva_vista.vistaValida.numVista and nueva_vista.vistaTentativa.copia==:undefined
+#           else if n_vista != nueva_vista.vistaValida.num_vista and nueva_vista.vistaTentativa.copia==:undefined
 #                nueva_vista.vistaTentativa.copia = nodo_origen
 #           end
 #        end
@@ -186,8 +191,8 @@ defmodule ServidorGV do
 
     #proceso cansino cada 50 ms
     defp procesar_situacion_servidores(vista) do
-        IO.puts("Cansino chan chan")
-        IO.inspect(Map.get(vista.situacionServidores, :latidosGV))
+#        IO.puts("Cansino chan chan")
+#        IO.inspect(Map.get(vista.situacionServidores, :latidosGV))
         nueva_situacionServidores = %{vista.situacionServidores | :latidosGV => vista.situacionServidores[:latidosGV]+1}
         %{vista | situacionServidores: nueva_situacionServidores}
 
@@ -222,7 +227,7 @@ defmodule ServidorGV do
 #            nueva_vista.vistaTentativa.copia == :undefined ->
 #                {nueva_vista, false}
 #            true ->
-#                nueva_vista.vistaTentativa.numVista+1
+#                nueva_vista.vistaTentativa.num_vista+1
 #                #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
 #                nueva_vista.vistaTentativa.primario = nueva_vista.vistaTentativa.copia
 #                nueva_vista.vistaTentativa.copia = :undefined
@@ -231,7 +236,7 @@ defmodule ServidorGV do
     end
 
     defp falloCopia(nueva_vista) do
-#      nueva_vista.vistaTentativa.numVista+1
+#      nueva_vista.vistaTentativa.num_vista+1
 #      #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
 #      nueva_vista.vistaTentativa.copia = :undefined
 #
