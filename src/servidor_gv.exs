@@ -206,7 +206,7 @@ defmodule ServidorGV do
                 #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
 
                 listNodos = List.delete(Map.keys(vista.situacionServidores), :latidosGV) |> List.delete(vista.vistaTentativa.primario) |> List.delete(vista.vistaTentativa.copia)
-                IO.puts("listNodos: #{listNodos}")
+
                 {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,vista.situacionServidores,:undefined)
                 IO.puts("nodo recogido: #{nodo}")
                 #buscar nodo en espera vivo
@@ -235,9 +235,11 @@ defmodule ServidorGV do
     defp buscarNodoEspera(listNodos,situacionServidores,encontrado) do
         #var = Map.keys(vista.situacionServidores)
         #var = Enum.fetch(vista.situacionServidores,n)
-        nodo = List.pop_at(listNodos,0)
+        #{nodo,list} = List.pop_at(listNodos,0)
+        nodo = List.first(listNodos)
+        listNodos = List.delete(listNodos, nodo)
         IO.puts("elemento sitServidores #{nodo}")
-        vivo = estaVivo(situacionServidores.latidosGV, situacionServidores.nodo)
+        vivo = estaVivo(situacionServidores.latidosGV, situacionServidores[nodo])
         IO.puts("esta vivo? #{vivo}")
         {nuevaSituacionServidores, nuevoEncontrado} = cond do
           vivo and encontrado==:undefined ->
@@ -252,11 +254,11 @@ defmodule ServidorGV do
     end
 
     defp estaVivo(latidosGV, latidosNodo) do
-#      if(latidosGV-situacionServidores.nodo >= @latidos_fallidos) do
-#        false
-#      else
-#        true
-#      end
-      latidosGV-latidosNodo >= @latidos_fallidos
+      if(latidosGV-latidosNodo >= @latidos_fallidos) do
+        false
+      else
+        true
+      end
+      #latidosGV-latidosNodo >= @latidos_fallidos
     end
 end

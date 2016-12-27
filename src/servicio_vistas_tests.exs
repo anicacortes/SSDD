@@ -29,7 +29,7 @@ defmodule  GestorVistasTest do
         sv = ServidorGV.start(@host1, "sv")
         c1 = ClienteGV.start(@host1, "c1", sv)
         c2 = ClienteGV.start(@host1, "c2", sv)
-        #c3 = ClienteGV.start(@host1, "c3", sv)
+        c3 = ClienteGV.start(@host1, "c3", sv)
 
         on_exit fn ->
                     #eliminar_nodos(sv, c1, c2, c3)
@@ -96,8 +96,8 @@ defmodule  GestorVistasTest do
     end
 
     ## Test 4 : Servidor rearrancado (C1) se convierte en copia.
-    test "Servidor rearrancado se conviert en copia", %{c1: c1, c2: c2} do
-        IO.puts("Test: Servidor rearrancado se conviert en copia ...")
+    test "Servidor rearrancado se convierte en copia", %{c1: c1, c2: c2} do
+        IO.puts("Test: Servidor rearrancado se convierte en copia ...")
 
         {vista, _} = ClienteGV.latido(c2, 2)   # Solo interesa vista tentativa
         servidor_rearranca_a_copia(c1, c2, 2, @latidos_fallidos * 2)
@@ -112,7 +112,16 @@ defmodule  GestorVistasTest do
 
     ## Test 5 : 3er servidor en espera (C3) se convierte en copia
     ##          si primario falla.
-    # espera_a_copia(C1, C2, C3),
+    test "Servidor en espera se convierte en copia por fallo de primario", %{c1: c1, c2: c2, c3: c3} do
+        IO.puts("Test:Servidor en espera se convierte en copia por fallo de primario")
+
+        {vista, _} = ClienteGV.latido(c3, 0)
+        espera_a_copia(c1, c2, c3, vista.num_vista)
+        #c1 pasa a ser primario y valida la vista
+        ClienteGV.latido(c1, vista.num_vista + 1)
+        comprobar_valida(c1, c1, c3, vista.num_vista + 1)
+    end
+
 
     ## Test 6 : Primario rearrancado (C2) es tratado como caido.
     # rearrancado_caido(C1, C3),
@@ -204,6 +213,24 @@ defmodule  GestorVistasTest do
         assert vista.copia == nodo_copia 
 
         assert vista.num_vista == n_vista
+    end
+
+    defp espera_a_copia(c1, c2, c3, num_vista_inicial) do
+        {vista, _} = ClienteGV.latido(c3, num_vista_inicial)
+
+        espera_releva_copia(c1, c3, vista.num_vista, @latidos_fallidos * 2) #provoca caida primario
+
+    end
+
+    defp espera_releva_copia(_c2, _c3, num_vista_inicial, 0) do :fin end
+    defp espera_releva_copia(c2, c3, num_vista_inicial, x) do
+      {vista, _} = ClienteGV.latido(c2, num_vista_inicial)
+      ClienteGV.latido(c3, num_vista_inicial)
+      #Si no ha habido un fallo, se vuelve a mandar latidos de copia y espera
+      if (vista.primario != c2) or (vista.copia != c3) do
+          Process.sleep(@intervalo_latido)
+          espera_releva_copia(c2, c3, num_vista_inicial, x - 1)
+      end
     end
 
 
