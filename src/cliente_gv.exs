@@ -4,7 +4,7 @@ defmodule ClienteGV do
 
     @tiempo_espera_carga_remota 900
     
-    @tiempo_espera_de_respuesta 10
+    @tiempo_espera_de_respuesta 50
     
 
     @doc """
@@ -32,6 +32,7 @@ defmodule ClienteGV do
         receive do   # esperar respuesta del ping
             {:vista_tentativa, vista, is_ok?} -> {vista, is_ok?}
         after @tiempo_espera_de_respuesta ->
+        IO.puts("RETRASADO LATIDO DESDE latido")
             {ServidorGV.vista_inicial(), false}
         end
     end
@@ -93,9 +94,9 @@ defmodule ClienteGV do
         send({:servidor_gv, nodo_servidor_gv}, {:latido, Node.self(), num_vista})
 
         # esperar respuesta del ping
-        receive do  {:vista_tentativa, vista, encontrado?} ->  #wtf es encontrado?
+        receive do  {:vista_tentativa, vista, encontrado?} ->
                         send(pid_maestro, {:vista_tentativa, vista, encontrado?})
-        after @tiempo_espera_de_respuesta ->
+        after @tiempo_espera_de_respuesta -> IO.puts("RETRASADO LATIDO DESDE procesalatido")
                     send(pid_maestro, {:vista_tentativa,
                                         ServidorGV.vista_inicial(), false}) #pone a 0 la vista del nodo o del servidor?
         end
