@@ -28,7 +28,6 @@ defmodule  GestorVistasTest do
         c3 = :"c3@127.0.0.1"
         sv = ServidorGV.start(@host1, "sv")
         c1 = ClienteGV.start(@host1, "c1", sv)
-        IO.puts("cliente C1 #{c1}")
         c2 = ClienteGV.start(@host1, "c2", sv)
         #c3 = ClienteGV.start(@host1, "c3", sv)
 

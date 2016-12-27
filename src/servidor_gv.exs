@@ -193,46 +193,75 @@ defmodule ServidorGV do
     defp procesar_situacion_servidores(vista) do
 #        IO.puts("Cansino chan chan")
 #        IO.inspect(Map.get(vista.situacionServidores, :latidosGV))
-        nueva_situacionServidores = %{vista.situacionServidores | :latidosGV => vista.situacionServidores[:latidosGV]+1}
-        %{vista | situacionServidores: nueva_situacionServidores}
+        #incrementa en 1 los latidos del servidor
+        nuevaSituacionServidores = %{vista.situacionServidores | :latidosGV => vista.situacionServidores[:latidosGV]+1}
+        nuevaVista = %{vista | situacionServidores: nuevaSituacionServidores}
 
-#        latidosGV = Map.get(nueva_vista.procesar_situacionServidores, "latidosGV")
-#        Map.put(nueva_vista.procesar_situacionServidores, "latidosNodo", latidosGV)
-
-#
-#        if (map.latidosP > 0) do
-#            %{map | latidosP: 0}
-#        else
-#            %{map | fallosP: 1}
-#        end
-#        if (map.latidosC > 0) do
-#            %{map | latidosC: 0}
-#        else
-#            %{map | fallosC: 1}
-#        end
-#        if (map.fallosP == @latidos_fallidos) do
-#            {nueva_vista, todoBien} = falloPrimario(nueva_vista)
-#        else if(map.fallosC == @latidos_fallidos)
-#            {nueva_vista, todoBien} = falloCopia(nueva_vista)
-#        end
+        {nueva_vista, todoBien} = cond do
+          nuevaVista.vistaTentativa.primario != :undefined and nuevaVista.vistaTentativa.copia != :undefined ->
+             latidosPrimario = nuevaVista.situacionServidores[nuevaVista.vistaTentativa.primario]
+             difPrimario = nuevaVista.situacionServidores[:latidosGV]-latidosPrimario
+             latidosCopia = nuevaVista.situacionServidores[nuevaVista.vistaTentativa.copia]
+             difCopia = nuevaVista.situacionServidores[:latidosGV]-latidosCopia
+             IO.puts("difPrimario #{difPrimario}")
+             IO.puts("difCopia #{difCopia}")
+             {nueva_vista, todoBien} = cond do
+               #error critico
+               difPrimario >= @latidos_fallidos and difCopia >= @latidos_fallidos ->
+                 #exit
+                 {nuevaVista, false}
+               difPrimario >= @latidos_fallidos ->
+                 falloPrimario(nuevaVista)
+               difCopia >= @latidos_fallidos ->
+                 falloCopia(nuevaVista)
+               true ->
+                 {nuevaVista, true}
+             end
+          nuevaVista.vistaTentativa.primario != :undefined ->
+           latidosPrimario = nuevaVista.situacionServidores[nuevaVista.vistaTentativa.primario]
+           difPrimario = nuevaVista.situacionServidores[:latidosGV]-latidosPrimario
+           IO.puts("difPrimario #{difPrimario}")
+             if(difPrimario >= @latidos_fallidos) do
+               {nueva_vista, todoBien} = falloPrimario(nuevaVista)
+             else
+               {nuevaVista, true}
+             end
+          nuevaVista.vistaTentativa.copia != :undefined ->
+            latidosCopia = nuevaVista.situacionServidores[nuevaVista.vistaTentativa.copia]
+            difCopia = nuevaVista.situacionServidores[:latidosGV]-latidosCopia
+            IO.puts("difCopia #{difCopia}")
+               if(difCopia >= @latidos_fallidos) do
+                 {nueva_vista, todoBien} = falloCopia(nuevaVista)
+               else
+                   {nuevaVista, true}
+               end
+          true ->
+            {nuevaVista, true}
+        end
+        nueva_vista
     end
 
-    defp falloPrimario(nueva_vista) do
-        #ERROR CRITICO -> PERDIDA DATOS
-#        {nueva_vista, todoBien} = cond do
-#            nueva_vista.vistaTentativa != nueva_vista.vistaValida ->
-#                #STOP TODO
-#                #todoBien = false
-#                {nueva_vista, false}
-#            nueva_vista.vistaTentativa.copia == :undefined ->
-#                {nueva_vista, false}
-#            true ->
-#                nueva_vista.vistaTentativa.num_vista+1
-#                #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
+    defp falloPrimario(vista) do
+        {vista, todoBien} = cond do
+            #situacion: ha caido la copia primero y no se ha validado la vista --> ERROR CRITICO
+            vista.vistaTentativa != vista.vistaValida ->
+                #exit
+                {vista, false}
+            #situacion: no hay copia --> ERROR CRITICO
+            vista.vistaTentativa.copia == :undefined ->
+                #exit
+                {vista, false}
+            true ->
+                #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
+                nuevaVistaT = %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
+                   :primario => vista.vistaTentativa[:copia]}
+                nuevaSituacionServidores = buscarNodoEspera(vista,3)
+
 #                nueva_vista.vistaTentativa.primario = nueva_vista.vistaTentativa.copia
-#                nueva_vista.vistaTentativa.copia = :undefined
-#                {nueva_vista, true}
-#            end
+                #buscar nodo en espera vivo
+
+                {vista, true}
+            end
     end
 
     defp falloCopia(nueva_vista) do
@@ -241,5 +270,24 @@ defmodule ServidorGV do
 #      nueva_vista.vistaTentativa.copia = :undefined
 #
 #      {nueva_vista,true}
+    end
+
+    #Busca un nodo en la lista de espera para ponerlo como copia
+    defp buscarNodoEspera(vista,n) do
+        var = Enum.fetch(vista.situacionServidores,n)
+        IO.puts("elemento sitServidores #{var}")
+
+        if(Map.size(vista.situacionServidores)-1>n) do
+          buscarNodoEspera(vista.situacionServidores,n+1)
+        end
+        vista.situacionServidores
+    end
+
+    defp estaVivo(latidosGV, nodo, situacionServidores) do
+      if(latidosGV-situacionServidores.nodo >= @latidos_fallidos) do
+        false
+      else
+        true
+      end
     end
 end
