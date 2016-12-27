@@ -142,8 +142,6 @@ defmodule ServidorGV do
 
     #proceso cansino cada 50 ms
     defp procesar_situacion_servidores(vista) do
-#        IO.puts("Cansino chan chan")
-#        IO.inspect(Map.get(vista.situacionServidores, :latidosGV))
         #incrementa en 1 los latidos del servidor
         nuevaSituacionServidores = %{vista.situacionServidores | :latidosGV => vista.situacionServidores[:latidosGV]+1}
         nuevaVista = %{vista | situacionServidores: nuevaSituacionServidores}
@@ -189,6 +187,9 @@ defmodule ServidorGV do
           true ->
             {nuevaVista, true}
         end
+        if (todoBien == false) do
+            IO.puts("ERROR CRITICO")
+        end
         nueva_vista
     end
 
@@ -217,12 +218,15 @@ defmodule ServidorGV do
             end
     end
 
-    defp falloCopia(nueva_vista) do
-#      nueva_vista.vistaTentativa.num_vista+1
-#      #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
-#      nueva_vista.vistaTentativa.copia = :undefined
-#
-#      {nueva_vista,true}
+    defp falloCopia(vista) do
+            listNodos = List.delete(Map.keys(vista.situacionServidores), :latidosGV) |> List.delete(vista.vistaTentativa.primario) |> List.delete(vista.vistaTentativa.copia)
+            {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,vista.situacionServidores,:undefined)
+            IO.puts("nodo recogido: #{nodo}")
+            #buscar nodo en espera vivo
+            nuevaVistaT = %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
+            :copia => nodo}
+            nuevaVista = %{vista | situacionServidores: nuevaSituacionServidores, vistaTentativa: nuevaVistaT}
+            {nuevaVista, nodo!=:undefined}
     end
 
 
@@ -233,9 +237,6 @@ defmodule ServidorGV do
 
     #Busca un nodo en la lista de espera para ponerlo como copia. Devuelve el map con todo, y el nodo buscado
     defp buscarNodoEspera(listNodos,situacionServidores,encontrado) do
-        #var = Map.keys(vista.situacionServidores)
-        #var = Enum.fetch(vista.situacionServidores,n)
-        #{nodo,list} = List.pop_at(listNodos,0)
         nodo = List.first(listNodos)
         listNodos = List.delete(listNodos, nodo)
         IO.puts("elemento sitServidores #{nodo}")
@@ -259,6 +260,5 @@ defmodule ServidorGV do
       else
         true
       end
-      #latidosGV-latidosNodo >= @latidos_fallidos
     end
 end
