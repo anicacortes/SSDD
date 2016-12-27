@@ -143,35 +143,52 @@ defmodule  GestorVistasTest do
     ##          Poner C3 como Primario, C1 como Copia, C2 para comprobar
     ##          - C3 no confirma vista en que es primario,
     ##          - Cae, pero C1 no es promocionado porque C3 no confimo !
-    test "Servidor de vistas espera a que primario confirme vista pero este no lo hace.", %{c1: c1, c2: c2, c3: c3} do
-        IO.puts("Test:Servidor de vistas espera a que primario confirme vista pero este no lo hace ...")
-
-        {vista, _} = ClienteGV.latido(c3, -1)
-        #Tiramos al primario c1
-        espera_releva_copia(c3, c2, vista.num_vista, @latidos_fallidos * 2)
-#        {vista, _} = ClienteGV.latido(c3, vista.num_vista + 1)
-        #Metemos a c1 como espera
-        ClienteGV.latido(c1, 0)
-        #Ahora hay que tirar a c2 que esta como copia
-        espera_releva_copia(c3, c1, vista.num_vista, @latidos_fallidos * 2)
-#        {vista, _} = ClienteGV.latido(c3, vista.num_vista + 1)
-        {vista, _} = ClienteGV.latido(c2, 0)
-        #Situacion del test
-        espera_releva_copia(c1, c2, vista.num_vista, @latidos_fallidos * 2)
-
-        {vista, coincide} = ClienteGV.obten_vista(c1)
-        assert coincide==false
-
-         IO.puts(" ... Superado")
-
-        end
-
-        #primario_no_confirma_vista(C1, C2, C3)
+#    test "Servidor de vistas espera a que primario confirme vista pero este no lo hace.", %{c1: c1, c2: c2, c3: c3} do
+#        IO.puts("Test:Servidor de vistas espera a que primario confirme vista pero este no lo hace ...")
+#        {vista, _} = ClienteGV.latido(c3, -1)
+#        #Tiramos al primario c1
+#        espera_releva_copia(c3, c2, vista.num_vista, @latidos_fallidos * 2)
+#        #Metemos a c1 como espera
+#        ClienteGV.latido(c1, 0)
+#        #Ahora hay que tirar a c2 que esta como copia
+#        espera_releva_copia(c3, c1, vista.num_vista, @latidos_fallidos * 2)
+#        {vista, _} = ClienteGV.latido(c2, 0)
+#        #Situacion del test
+#        espera_releva_copia(c1, c2, vista.num_vista, @latidos_fallidos * 2)
+#        {vista, coincide} = ClienteGV.obten_vista(c1)
+#        assert coincide==false
+#         IO.puts(" ... Superado")
+#        end
 
 
     ## Test 8 : Si anteriores servidores caen (Primario  y Copia),
     ##       un nuevo servidor sin inicializar no puede convertirse en primario.
     # sin_inicializar_no(C1, C2, C3),
+#    test "Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario", %{c1: c1, c2: c2, c3: c3} do
+#            IO.puts("Test: Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario ...")
+#            {vista, _} = ClienteGV.latido(c2, 0)    #Poner c3 en espera
+#            #Esperamos a que caigan ambos servidores, primario y copia
+#            caer_primario_secundario(c2, vista.num_vista, @latidos_fallidos * 2)
+#             IO.puts(" ... Superado")
+#    end
+
+
+    #Fallo de red
+    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
+             IO.puts("Test:Fallo de red, sustituye al primario ...")
+
+             {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
+
+             #espera fallo del primario c1
+             espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
+
+             {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
+             #cae copia y no hay en espera
+             espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
+             comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
+             IO.puts(" ... Superado")
+         end
+
 
 
     # ------------------ FUNCIONES DE APOYO A TESTS ------------------------
@@ -224,7 +241,12 @@ defmodule  GestorVistasTest do
         end
     end
 
-    defp comprobar_diferentes(v)
+    defp comprobar_caido(nodo_cliente, nodo_primario, nodo_copia, n_vista, n_vistaCaido) do
+            # Solo interesa vista tentativa
+            {vista, _} = ClienteGV.latido(nodo_cliente,n_vistaCaido) # se levanta el caido y se pone en espera
+            IO.puts("COMP CAIDO: numVista #{vista.num_vista} primario #{vista.primario} copia #{vista.copia}")
+            comprobar(nodo_primario, nodo_copia, vista.num_vista, vista)
+    end
 
     defp comprobar_tentativa(nodo_cliente, nodo_primario, nodo_copia, n_vista) do
         # Solo interesa vista tentativa
@@ -268,5 +290,12 @@ defmodule  GestorVistasTest do
           Process.sleep(@intervalo_latido)
           espera_releva_copia(c2, c3, num_vista_inicial, x - 1)
       end
+    end
+
+    defp caer_primario_secundario(_c3, num_vista_inicial, 0) do :fin end
+    defp caer_primario_secundario(c3, num_vista_inicial, x) do
+      ClienteGV.latido(c3, num_vista_inicial)
+      Process.sleep(@intervalo_latido)
+      caer_primario_secundario(c3, num_vista_inicial, x - 1)
     end
 end

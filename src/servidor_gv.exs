@@ -72,8 +72,14 @@ defmodule ServidorGV do
            {:latido, nodo_origen, n_vista} ->
                 IO.puts("Recibo latido...")
                 IO.puts("BUCLE RECEPCION: num_vista #{vista.vistaTentativa.num_vista} primario #{vista.vistaTentativa.primario} copia #{vista.vistaTentativa.copia}")
-                #nueva_vista = procesa_latido(nodo_origen, n_vista, vista)
-                #valor =  Map.get(vista.situacionServidores, :latidosGV) + 1
+
+                if(n_vista != 0 and n_vista != -1 and Map.fetch(vista.situacionServidores, nodo_origen) == :error) do
+                  IO.puts("Proceso que ha tenido fallo de red")
+                  if (vista.vistaTentativa.copia == :undefined) do
+                    vista = procesa_latido(nodo_origen, 0, vista)
+                  end
+                end
+
                 #Meter un nodo en la lista que gestiona los latidos (tambien se meten lo q quedan en espera)
                 nueva_situacionServidores = Map.put(vista.situacionServidores, nodo_origen, Map.get(vista.situacionServidores, :latidosGV) + 1)
                 nuevaVista = %{vista | situacionServidores: nueva_situacionServidores}
@@ -116,7 +122,7 @@ defmodule ServidorGV do
                     IO.puts("Antes num_vista: #{Map.get(vista.vistaTentativa, :num_vista)} copia #{Map.get(vista.vistaTentativa, :copia)}")
                     nuevaVistaT = %{vista.vistaTentativa | num_vista: Map.get(vista.vistaTentativa, :num_vista) + 1, copia: nodo_origen}
                     vistaN = %{vista | vistaTentativa: nuevaVistaT}
-                    vistaN = %{vistaN | vistaValida: nuevaVistaT}
+#                    vistaN = %{vistaN | vistaValida: nuevaVistaT}
                     IO.puts("Despues num_vista: #{Map.get(vistaN.vistaTentativa, :num_vista)} copia #{Map.get(vistaN.vistaTentativa, :copia)}")
                     vistaN
               true ->
@@ -188,7 +194,7 @@ defmodule ServidorGV do
             {nuevaVista, true}
         end
         if (todoBien == false) do
-            IO.puts("ERROR CRITICO")
+            exit(:kill)
         end
         nueva_vista
     end
@@ -205,10 +211,10 @@ defmodule ServidorGV do
                 {vista, false}
             true ->
                 #Colocamos a la copia como nuevo primario, y si hay en espera, como copia
-
                 listNodos = List.delete(Map.keys(vista.situacionServidores), :latidosGV) |> List.delete(vista.vistaTentativa.primario) |> List.delete(vista.vistaTentativa.copia)
-
-                {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,vista.situacionServidores,:undefined)
+                #Se pasa como parametro sitServidores despues d borrar el nodo primario en map
+                {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,
+                  Map.delete(vista.situacionServidores, vista.vistaTentativa.primario),:undefined)
                 IO.puts("nodo recogido: #{nodo}")
                 #buscar nodo en espera vivo
                 nuevaVistaT = %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
@@ -220,7 +226,9 @@ defmodule ServidorGV do
 
     defp falloCopia(vista) do
             listNodos = List.delete(Map.keys(vista.situacionServidores), :latidosGV) |> List.delete(vista.vistaTentativa.primario) |> List.delete(vista.vistaTentativa.copia)
-            {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,vista.situacionServidores,:undefined)
+            #Se pasa como parametro sitServidores despues d borrar el nodo copia en map
+            {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,
+              Map.delete(vista.situacionServidores, vista.vistaTentativa.copia),:undefined)
             IO.puts("nodo recogido: #{nodo}")
             #buscar nodo en espera vivo
             nuevaVistaT = %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
