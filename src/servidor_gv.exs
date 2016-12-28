@@ -125,6 +125,16 @@ defmodule ServidorGV do
 #                    vistaN = %{vistaN | vistaValida: nuevaVistaT}
                     IO.puts("Despues num_vista: #{Map.get(vistaN.vistaTentativa, :num_vista)} copia #{Map.get(vistaN.vistaTentativa, :copia)}")
                     vistaN
+              #El servidor no se entera de las caidas de primario y copia
+              vista.vistaTentativa.primario == nodo_origen ->
+                    {nuevaVista, todoBien} = falloPrimario(vista)
+                    if (todoBien == false) do
+                        exit(:kill)
+                     end
+                    nuevaVista
+              vista.vistaTentativa.copia == nodo_origen ->
+                    {nuevaVista, todoBien} = falloCopia(vista)
+                    nuevaVista
               true ->
                     IO.puts("Se mete nodo espera..")
                     vista
@@ -220,7 +230,7 @@ defmodule ServidorGV do
                 nuevaVistaT = %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
                    :primario => vista.vistaTentativa[:copia], :copia => nodo}
                 nuevaVista = %{vista | situacionServidores: nuevaSituacionServidores, vistaTentativa: nuevaVistaT}
-                {nuevaVista, nodo!=:undefined}
+                {nuevaVista, true}
             end
     end
 
@@ -234,7 +244,7 @@ defmodule ServidorGV do
             nuevaVistaT = %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
             :copia => nodo}
             nuevaVista = %{vista | situacionServidores: nuevaSituacionServidores, vistaTentativa: nuevaVistaT}
-            {nuevaVista, nodo!=:undefined}
+            {nuevaVista, true}
     end
 
 
@@ -242,7 +252,6 @@ defmodule ServidorGV do
     IO.puts("lista vacia d espera")
     {situacionServidores, encontrado}
     end
-
     #Busca un nodo en la lista de espera para ponerlo como copia. Devuelve el map con todo, y el nodo buscado
     defp buscarNodoEspera(listNodos,situacionServidores,encontrado) do
         nodo = List.first(listNodos)
