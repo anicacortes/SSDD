@@ -175,34 +175,34 @@ defmodule  GestorVistasTest do
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     #Fallo de red
-#    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
-#         IO.puts("Test: Fallo de red, sustituye al primario ...")
-#
-#         {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
-#
-#         #espera fallo del primario c1
-#         espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
-#
-#         {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
-#         #cae copia y no hay en espera
-#         espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
-#         comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
-#         IO.puts(" ... Superado")
-#    end
+    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
+         IO.puts("Test: Fallo de red, sustituye al primario ...")
+
+         {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
+
+         #espera fallo del primario c1
+         espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
+
+         {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
+         #cae copia y no hay en espera
+         espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
+         comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
+         IO.puts(" ... Superado")
+    end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     #Caida rapida de un servidor (envia latido 0)
-    test "Fallo del servidor sin que lo detecte GV", %{c1: c1, c2: c2, c3: c3} do
-         IO.puts("Test: Fallo del servidor sin que lo detecte GV...")
-
-         {vista, _} = ClienteGV.latido(c1, 0) #FALLO
-         Process.sleep(@intervalo_latido)
-         #valida el nuevo primario
-         {vista, _} = ClienteGV.latido(c3, vista.num_vista + 1)
-
-         comprobar_valida(c3, c3, c2, vista.num_vista)
-         IO.puts(" ... Superado")
-    end
+#    test "Fallo del servidor sin que lo detecte GV", %{c1: c1, c2: c2, c3: c3} do
+#         IO.puts("Test: Fallo del servidor sin que lo detecte GV...")
+#
+#         {vista, _} = ClienteGV.latido(c1, 0) #FALLO
+#         Process.sleep(@intervalo_latido)
+#         #valida el nuevo primario
+#         {vista, _} = ClienteGV.latido(c3, vista.num_vista + 1)
+#
+#         comprobar_valida(c3, c3, c2, vista.num_vista)
+#         IO.puts(" ... Superado")
+#    end
 
 
     # ------------------ FUNCIONES DE APOYO A TESTS ------------------------
@@ -211,7 +211,6 @@ defmodule  GestorVistasTest do
     defp primer_primario(c, x) do
 
         {vista, _} = ClienteGV.latido(c, 0)
-        IO.puts("PRIMER PRIMARIO: numVista #{vista.num_vista} primario #{vista.primario} copia #{vista.copia}")
         if vista.primario != c do
             Process.sleep(@intervalo_latido)
             primer_primario(c, x - 1)
@@ -258,14 +257,13 @@ defmodule  GestorVistasTest do
     defp comprobar_caido(nodo_cliente, nodo_primario, nodo_copia, n_vista, n_vistaCaido) do
         # Solo interesa vista tentativa
         {vista, _} = ClienteGV.latido(nodo_cliente,n_vistaCaido) # se levanta el caido y se pone en espera
-        IO.puts("COMP CAIDO: numVista #{vista.num_vista} primario #{vista.primario} copia #{vista.copia}")
+        Process.sleep(@intervalo_latido)
         comprobar(nodo_primario, nodo_copia, vista.num_vista, vista)
     end
 
     defp comprobar_tentativa(nodo_cliente, nodo_primario, nodo_copia, n_vista) do
         # Solo interesa vista tentativa
-        {vista, _} = ClienteGV.latido(nodo_cliente, -1) 
-        IO.puts("COMP TENTATIVA: numVista #{vista.num_vista} primario #{vista.primario} copia #{vista.copia}")
+        {vista, _} = ClienteGV.latido(nodo_cliente, -1)
         comprobar(nodo_primario, nodo_copia, n_vista, vista)        
     end
 
@@ -280,7 +278,6 @@ defmodule  GestorVistasTest do
 
 
     defp comprobar(nodo_primario, nodo_copia, n_vista, vista) do
-        IO.puts("nodoPrimario #{nodo_primario} vistaPrimario #{vista.primario}")
         assert vista.primario == nodo_primario 
 
         assert vista.copia == nodo_copia 
