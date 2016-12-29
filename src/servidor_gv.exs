@@ -68,6 +68,7 @@ defmodule ServidorGV do
     defp bucle_recepcion(vista) do
         nueva_vista = receive do
            {:latido, nodo_origen, n_vista} ->
+                IO.puts("nodo origen: #{nodo_origen}, nVista: #{n_vista}, okOerror? #{Map.fetch(vista.situacionServidores,nodo_origen)}")
                 vista = comprobar_fallo_red(vista, n_vista, nodo_origen)
                 #Meter todos nodos en la lista que gestiona los latidos
                 nuevaSitServ = Map.put(vista.situacionServidores, nodo_origen,
