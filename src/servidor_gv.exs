@@ -5,14 +5,9 @@ defmodule ServidorGV do
     """
 
     # Tipo estructura de dtos que guarda el estado del servidor de vistas
-    # COMPLETAR  con lo campos necesarios para gestionar
-    # el estado del gestor de vistas
-
-    #num_vista,idPrimario,idCopia
     defstruct  vistaValida: %{num_vista: 0, primario: :undefined, copia: :undefined},
             vistaTentativa: %{num_vista: 0, primario: :undefined, copia: :undefined},
             situacionServidores: %{:latidosGV => 0} #map estado servidores
-            #nombreNodosEspera:
 
     @type t_vista :: %{num_vista: integer, primario: node, copia: node}
 
@@ -20,7 +15,7 @@ defmodule ServidorGV do
 
     @periodo_latido 50
 
-    @latidos_fallidos 4 #4 o 5 latidos fallidos?
+    @latidos_fallidos 4
 
 
     @doc """
@@ -52,24 +47,27 @@ defmodule ServidorGV do
 
         spawn(__MODULE__, :init_monitor, [self()]) # otro proceso concurrente
 
-        #### VUESTRO CODIGO DE INICIALIZACION
-        #vista_inicial() #Llamar al metodo de inicio
-
         bucle_recepcion(%ServidorGV{})
     end
 
+    @doc """
+        Metodo que lo ejecuta un proceso cada 50ms
+    """
     def init_monitor(pid_principal) do
         send(pid_principal, :procesa_situacion_servidores)
         Process.sleep(@periodo_latido)
         init_monitor(pid_principal)
     end
 
-
+    @doc """
+        Bucle principal de recepcion de todos los mensajes
+    """
     defp bucle_recepcion(vista) do
         nueva_vista = receive do
            {:latido, nodo_origen, n_vista} ->
                 vista = comprobar_fallo_red(vista, n_vista, nodo_origen)
-                #Meter todos nodos en la lista que gestiona los latidos
+                #Meter todos nodos en la lista que gestiona los latidos e
+                #incrementa numero de latidos
                 nuevaSitServ = Map.put(vista.situacionServidores, nodo_origen,
                    Map.get(vista.situacionServidores, :latidosGV) + 1)
                 nuevaVista = %{vista | situacionServidores: nuevaSitServ}
@@ -93,9 +91,13 @@ defmodule ServidorGV do
            :procesa_situacion_servidores ->
                 procesar_situacion_servidores(vista)
         end
-        bucle_recepcion(nueva_vista) #ponerlo en el latido y obten_vista para q pueda parar el procesa?
+        bucle_recepcion(nueva_vista)
     end
 
+    @doc """
+        Comprueba si se ha producido un fallo de red porque llega ping de un nodo
+        que no esta en espera
+    """
     defp comprobar_fallo_red(vista, n_vista, nodo_origen) do
         if(n_vista != 0 and n_vista != -1 and Map.fetch(vista.situacionServidores,
            nodo_origen) == :error) do
@@ -107,10 +109,11 @@ defmodule ServidorGV do
         vista
     end
 
+    @doc """
+         Modificacion de las vistas en funcion de la situacion actual
+    """
     defp procesa_latido(nodo_origen, n_vista, vista) do
-        #Asignar el numero de latidos + 1 del GV en el nodo q envia latido -> evitar desfases (justo antes del 4 latido sin enviar
-        #envia uno, contar desde entonces el tiempo! no desde el servidor)
-        cond do
+       cond do
           n_vista==0 ->
             cond do
               vista.vistaTentativa.primario == :undefined ->
@@ -147,6 +150,10 @@ defmodule ServidorGV do
         end
     end
 
+    @doc """
+         Incrementa nº latidos del GV y comprueba si ha habido fallo
+         Para el sistema en caso de fallo critico
+    """
     defp procesar_situacion_servidores(vista) do
         #incrementa en 1 los latidos del servidor
         nuevaSitSer = %{vista.situacionServidores | :latidosGV =>
@@ -170,6 +177,10 @@ defmodule ServidorGV do
         nueva_vista
     end
 
+    @doc """
+         Comprueba diferencia de latidos de primario y copia para ver si ha
+         habido algun fallo
+    """
     defp difLatido_primario_copia(vista) do
         latidosPrimario = vista.situacionServidores[vista.vistaTentativa.primario]
         difPrimario = vista.situacionServidores[:latidosGV]-latidosPrimario
@@ -185,6 +196,9 @@ defmodule ServidorGV do
         end
     end
 
+    @doc """
+         Comprueba diferencia de latidos de primario para ver si hay algun fallo
+    """
     defp difLatido_primario(vista) do
         latidosPrimario = vista.situacionServidores[vista.vistaTentativa.primario]
         difPrimario = vista.situacionServidores[:latidosGV]-latidosPrimario
@@ -196,6 +210,9 @@ defmodule ServidorGV do
         end
     end
 
+    @doc """
+         Comprueba diferencia de latidos de copia para ver si hay algun fallo
+    """
     defp difLatido_copia(vista) do
         latidosCopia = vista.situacionServidores[vista.vistaTentativa.copia]
         difCopia = vista.situacionServidores[:latidosGV]-latidosCopia
@@ -207,6 +224,9 @@ defmodule ServidorGV do
         end
     end
 
+    @doc """
+         Solucionar fallo en primario segun la situacion
+    """
     defp falloPrimario(vista) do
         cond do
             vista.vistaTentativa != vista.vistaValida ->
@@ -218,14 +238,23 @@ defmodule ServidorGV do
         end
     end
 
+    @doc """
+         Solucionar fallo en copia segun la situacion
+    """
+    defp falloCopia(vista) do
+        actualizar_vTentativa_fallo(vista, :copia)
+    end
+
+    @doc """
+         Actualizar lista nodos eliminando caidos y vista tentativa
+    """
     defp actualizar_vTentativa_fallo(vista, nodoPC) do
         listNodos = List.delete(Map.keys(vista.situacionServidores), :latidosGV)
           |> List.delete(vista.vistaTentativa.primario)
           |> List.delete(vista.vistaTentativa.copia)
         #Se pasa como parametro sitServidores despues d borrar el nodo primario en map
-        #borrado = Map.delete(vista.situacionServidores, Map.get(vista.vistaTentativa, nodoPC))
-        borrado = Map.delete(vista.situacionServidores, vista.vistaTentativa[nodoPC])
-        {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos, borrado,:undefined)
+        {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,
+          Map.delete(vista.situacionServidores, vista.vistaTentativa[nodoPC]),:undefined)
         #buscar nodo en espera vivo
         nuevaVistaT = case nodoPC do
           :primario ->
@@ -239,15 +268,13 @@ defmodule ServidorGV do
           nuevaVistaT}, true}
     end
 
-    defp falloCopia(vista) do
-        actualizar_vTentativa_fallo(vista, :copia)
-    end
-
+    @doc """
+         Busca un nodo en la lista de espera para ponerlo como copia
+         Devuelve undefined si no encuentra ninguno
+    """
     defp buscarNodoEspera([],situacionServidores, encontrado) do
         {situacionServidores, encontrado}
     end
-
-    #Busca un nodo en la lista de espera para ponerlo como copia.
     defp buscarNodoEspera(listNodos,situacionServidores,encontrado) do
         nodo = List.first(listNodos)
         listNodos = List.delete(listNodos, nodo)
@@ -264,6 +291,9 @@ defmodule ServidorGV do
         buscarNodoEspera(listNodos, nuevaSituacionServidores, nuevoEncontrado)
     end
 
+    @doc """
+         Devuelve true si el nodo sigue vivo, false en caso contrario
+    """
     defp estaVivo(latidosGV, latidosNodo) do
       if(latidosGV-latidosNodo >= @latidos_fallidos) do
         false
@@ -272,6 +302,10 @@ defmodule ServidorGV do
       end
     end
 
+    @doc """
+         Gestion de un fallo del primario que no ha detectado el GV,
+         se trata como un fallo normal
+    """
     defp caida_inesperada_primario(vista) do
         IO.puts("Caida inesperada primario")
         {nuevaVista, todoBien} = falloPrimario(vista)
@@ -281,10 +315,13 @@ defmodule ServidorGV do
         nuevaVista
     end
 
+    @doc """
+        Gestion de un fallo de la copia que no ha detectado el GV,
+        se trata como un fallo normal
+    """
     defp caida_inesperada_copia(vista) do
         IO.puts("Caida inesperada copia")
         {nuevaVista, _todoBien} = falloCopia(vista)
         nuevaVista
     end
-
 end
