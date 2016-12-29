@@ -1,3 +1,11 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:cliente_gv.exs
+#  Tiempo: 0h
+# Descripcion: Clase correspondiente al nodo que actúa como cliente (primario,copia,en espera)
+#####
+
 Code.require_file("#{__DIR__}/servidor_gv.exs")
 
 defmodule ClienteGV do

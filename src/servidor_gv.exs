@@ -1,3 +1,11 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servidor_gv.exs
+#  Tiempo: 25h
+# Descripcion: Clase correspondiente al gestor,encargado de la deteccion y resolucion de fallos
+#####
+
 defmodule ServidorGV do
 
     @moduledoc """

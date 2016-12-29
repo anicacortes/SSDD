@@ -1,3 +1,11 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servidor_gv.exs
+#  Tiempo: 0h
+# Descripcion: Clase correspondiente a la conexion de nodos en remoto a través de sshh
+#####
+
 defmodule NodoRemoto do
 
     @moduledoc """

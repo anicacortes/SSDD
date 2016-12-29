@@ -1,3 +1,11 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servicio_vistas_tests.exs
+#  Tiempo: 5h
+# Descripcion: Validación compuesta por 11 tests para comprobar el correcto funcionamiento
+#####
+
 # Compilar y cargar ficheros con modulos necesarios
 Code.require_file("#{__DIR__}/nodo_remoto.exs")
 Code.require_file("#{__DIR__}/servidor_gv.exs")
@@ -83,7 +91,7 @@ defmodule  GestorVistasTest do
     end
 
 
-    ## Test 3 : Después, Copia (C2) toma el relevo si Primario falla.,
+    ## Test 4 : Después, Copia (C2) toma el relevo si Primario falla.,
     test "Copia releva primario", %{c2: c2} do
         IO.puts("Test: copia toma relevo si primario falla ...")
 
@@ -95,7 +103,7 @@ defmodule  GestorVistasTest do
         IO.puts(" ... Superado")        
     end
 
-    ## Test 4 : Servidor rearrancado (C1) se convierte en copia.
+    ## Test 5 : Servidor rearrancado (C1) se convierte en copia.
     test "Servidor rearrancado se convierte en copia", %{c1: c1, c2: c2} do
         IO.puts("Test: Servidor rearrancado se convierte en copia ...")
 
@@ -110,7 +118,7 @@ defmodule  GestorVistasTest do
         IO.puts(" ... Superado")
      end
 
-    ## Test 5 : 3er servidor en espera (C3) se convierte en copia
+    ## Test 6 : 3er servidor en espera (C3) se convierte en copia
     ##          si primario falla.
     test "Servidor en espera se convierte en copia por fallo de primario", %{c1: c1, c2: c2, c3: c3} do
         IO.puts("Test:Servidor en espera se convierte en copia por fallo de primario ...")
@@ -126,7 +134,7 @@ defmodule  GestorVistasTest do
     end
 
 
-    ## Test 6 : Primario rearrancado (C2) es tratado como caido.
+    ## Test 7 : Primario rearrancado (C2) es tratado como caido.
      test "Primario rearrancado (C2) es tratado como caido", %{c1: c1, c2: c2, c3: c3} do
          IO.puts("Test:Primario rearrancado (C2) es tratado como caido ...")
 
@@ -139,7 +147,7 @@ defmodule  GestorVistasTest do
      end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
-    ## Test 7 : Servidor de vistas espera a que primario confirme vista
+    ## Test 8 : Servidor de vistas espera a que primario confirme vista
     ##          pero este no lo hace.
     ##          Poner C3 como Primario, C1 como Copia, C2 para comprobar
     ##          - C3 no confirma vista en que es primario,
@@ -162,7 +170,7 @@ defmodule  GestorVistasTest do
 #        end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
-    ## Test 8 : Si anteriores servidores caen (Primario  y Copia),
+    ## Test 9 : Si anteriores servidores caen (Primario  y Copia),
     ##       un nuevo servidor sin inicializar no puede convertirse en primario.
     # sin_inicializar_no(C1, C2, C3),
     test "Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario", %{c1: c1, c2: c2, c3: c3} do
