@@ -68,7 +68,6 @@ defmodule ServidorGV do
     defp bucle_recepcion(vista) do
         nueva_vista = receive do
            {:latido, nodo_origen, n_vista} ->
-                IO.puts("nodo origen: #{nodo_origen}, nVista: #{n_vista}, okOerror? #{Map.fetch(vista.situacionServidores,nodo_origen)}")
                 vista = comprobar_fallo_red(vista, n_vista, nodo_origen)
                 #Meter todos nodos en la lista que gestiona los latidos
                 nuevaSitServ = Map.put(vista.situacionServidores, nodo_origen,
@@ -215,7 +214,7 @@ defmodule ServidorGV do
             vista.vistaTentativa.copia == :undefined ->
                 {vista, false} #no hay copia --> ERROR
             true ->
-                actualizar_vTentativa_fallo(vista, "primario")
+                actualizar_vTentativa_fallo(vista, :primario)
         end
     end
 
@@ -224,14 +223,15 @@ defmodule ServidorGV do
           |> List.delete(vista.vistaTentativa.primario)
           |> List.delete(vista.vistaTentativa.copia)
         #Se pasa como parametro sitServidores despues d borrar el nodo primario en map
-        {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos,
-        Map.delete(vista.situacionServidores, vista.vistaTentativa[nodoPC]),:undefined)
+        #borrado = Map.delete(vista.situacionServidores, Map.get(vista.vistaTentativa, nodoPC))
+        borrado = Map.delete(vista.situacionServidores, vista.vistaTentativa[nodoPC])
+        {nuevaSituacionServidores, nodo} = buscarNodoEspera(listNodos, borrado,:undefined)
         #buscar nodo en espera vivo
         nuevaVistaT = case nodoPC do
-          "primario" ->
+          :primario ->
               %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
                  :primario => vista.vistaTentativa[:copia], :copia => nodo}
-          "copia" ->
+          :copia ->
               %{vista.vistaTentativa | :num_vista => vista.vistaTentativa[:num_vista]+1,
                  :copia => nodo}
         end
@@ -240,7 +240,7 @@ defmodule ServidorGV do
     end
 
     defp falloCopia(vista) do
-        actualizar_vTentativa_fallo(vista, "copia")
+        actualizar_vTentativa_fallo(vista, :copia)
     end
 
     defp buscarNodoEspera([],situacionServidores, encontrado) do

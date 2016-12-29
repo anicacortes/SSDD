@@ -158,37 +158,37 @@ defmodule  GestorVistasTest do
 #        espera_releva_copia(c1, c2, vista.num_vista, @latidos_fallidos * 2)
 #        {vista, coincide} = ClienteGV.obten_vista(c1)
 #        assert coincide==false
-#         IO.puts(" ... Superado")
+#        IO.puts(" ... Superado")
 #        end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     ## Test 8 : Si anteriores servidores caen (Primario  y Copia),
     ##       un nuevo servidor sin inicializar no puede convertirse en primario.
     # sin_inicializar_no(C1, C2, C3),
-#    test "Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario", %{c1: c1, c2: c2, c3: c3} do
-#            IO.puts("Test: Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario ...")
-#            {vista, _} = ClienteGV.latido(c2, 0)    #Poner c3 en espera
-#            #Esperamos a que caigan ambos servidores, primario y copia
-#            caer_primario_secundario(c2, vista.num_vista, @latidos_fallidos * 2)
-#             IO.puts(" ... Superado")
-#    end
+    test "Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario", %{c1: c1, c2: c2, c3: c3} do
+            IO.puts("Test: Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario ...")
+            {vista, _} = ClienteGV.latido(c2, 0)    #Poner c2 en espera
+            #Esperamos a que caigan ambos servidores, primario y copia
+            caer_primario_secundario(c2, vista.num_vista, @latidos_fallidos * 2)
+             IO.puts(" ... Superado")
+    end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     #Fallo de red
-    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
-         IO.puts("Test: Fallo de red, sustituye al primario ...")
-
-         {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
-
-         #espera fallo del primario c1
-         espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
-
-         {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
-         #cae copia y no hay en espera
-         espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
-         comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
-         IO.puts(" ... Superado")
-    end
+#    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
+#         IO.puts("Test: Fallo de red, sustituye al primario ...")
+#
+#         {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
+#
+#         #espera fallo del primario c1
+#         espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
+#
+#         {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
+#         #cae copia y no hay en espera
+#         espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
+#         comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
+#         IO.puts(" ... Superado")
+#    end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     #Caida rapida de un servidor (envia latido 0)

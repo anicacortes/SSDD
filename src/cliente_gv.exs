@@ -32,7 +32,7 @@ defmodule ClienteGV do
         receive do   # esperar respuesta del ping
             {:vista_tentativa, vista, is_ok?} -> {vista, is_ok?}
         after @tiempo_espera_de_respuesta ->
-        IO.puts("RETRASADO LATIDO DESDE latido")
+            IO.puts("Se ha finalizado la comunicacion")
             {ServidorGV.vista_inicial(), false}
         end
     end
@@ -96,7 +96,7 @@ defmodule ClienteGV do
         # esperar respuesta del ping
         receive do  {:vista_tentativa, vista, encontrado?} ->
                         send(pid_maestro, {:vista_tentativa, vista, encontrado?})
-        after @tiempo_espera_de_respuesta -> IO.puts("RETRASADO LATIDO DESDE procesalatido")
+        after @tiempo_espera_de_respuesta ->
                     send(pid_maestro, {:vista_tentativa,
                                         ServidorGV.vista_inicial(), false}) #pone a 0 la vista del nodo o del servidor?
         end
