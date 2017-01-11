@@ -89,7 +89,7 @@ defmodule ClienteSA do
     defp bucle_recepcion(servidor_gv) do
         receive do
             {op, param, pid} when (op == :lee) or (op == :escribe_generico) ->
-                resultado = realizar_operacion(op, param, servidor_gv)
+                resultado = realizar_operacion(op, param, servidor_gv, true)
                 send(pid, {:resultado, resultado})
                 bucle_recepcion(servidor_gv)
 
@@ -98,22 +98,22 @@ defmodule ClienteSA do
     end
 
 
-    defp realizar_operacion(op, param, servidor_gv) do
+    defp realizar_operacion(op, param, servidor_gv, primeraVez) do
         # Obtener el primario del servicio de almacenamiento
         p = ClienteGV.primario(servidor_gv)
     
         case p do
             :undefined ->  # esperamos un rato si aparece primario
                 Process.sleep(ServidorGV.intervalo_latido())
-                realizar_operacion(op, param, servidor_gv)
+                realizar_operacion(op, param, servidor_gv, true)
 
             nodo_primario ->   # enviar operación a ejecutar a primario
-                send({:servidor_sa, nodo_primario}, {op, param, Node.self()})
+                send({:servidor_sa, nodo_primario}, {op, param, Node.self(), primeraVez})
 
                 # recuperar resultado
                 receive do
                     {:resultado, :no_soy_primario_valido} ->
-                        realizar_operacion(op, param, servidor_gv)
+                        realizar_operacion(op, param, servidor_gv, true)
 
                     {:resultado, valor} -> 
                         valor
@@ -121,7 +121,7 @@ defmodule ClienteSA do
                 # Sin resultado en tiempo establecido ?
                 # -> se vuelve a pedir operacion al primario en curso
                 after ServidorGV.intervalo_latido() ->
-                    realizar_operacion(op, param, servidor_gv)
+                    realizar_operacion(op, param, servidor_gv, false)
                 end
         end
     end

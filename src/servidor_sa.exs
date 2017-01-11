@@ -63,25 +63,32 @@ defmodule ServidorSA do
         {nuevaVista, nodo_servidor_gv, almacen} = receive do
 
             # Solicitudes de lectura y escritura de clientes del servicio almace.
-            {op, param, nodo_origen}  ->
+            {op, param, nodo_origen, primeraVez}  ->
                 #hablar con los otros pa ver si estan vivos o hay fallo red?? hablar con el GV es suficiente?
-                {vistaValida, coincide} == ClienteGV.obten_vista(nodo_servidor_gv)
+                {vistaValida, coincide} = ClienteGV.obten_vista(nodo_servidor_gv)
                 if(vistaValida.primario == Node.self() && coincide) do
-                    propagacion()
-                    cond do
-                        op == :lee ->
-                        op == :escribe_generico ->
+                    okProp = propagacion(vistaValida.copia, op, param, nodo_origen, primeraVez)
+                    if (okProp) do
+                       {almacen,valor} = guardarEstado(op, param, nodo_origen, primeraVez, almacen)
+                       send({:cliente_sa, nodo_origen}, {:respuesta, valor})
                     end
                 else
                     send({:cliente_sa, nodo_origen}, {:resultado, :no_soy_primario_valido})
                 end
+                {vista, nodo_servidor_gv, almacen}
 
-
-                ""
+            #La copia recibe el almacen de datos y lo guarda
             {:transferencia, almacenRecibido} ->
                 respuesta = {vista, nodo_servidor_gv, almacenRecibido} #Proceso de transferencia
                 send({:servidor_sa, vista.primario}, {:okTransferencia})
                 respuesta
+
+            #La copia guarda los nuevos datos que se han propagado
+            {:propagacion, op, param, nodo_origen, primeraVez} ->
+                 {almacen,_} = guardarEstado(op, param, nodo_origen, primeraVez, almacen)
+                 send({:servidor_sa, vista.primario}, {:okPropagacion})
+
+            #Se realiza la gestion del latido
             {:enviarLatido} ->
                 vistaTentativa = ClienteGV.latido(nodo_servidor_gv, vista.num_vista)
 
@@ -99,6 +106,32 @@ defmodule ServidorSA do
         bucle_recepcion_principal(nuevaVista, nodo_servidor_gv)
         end
 
+        #Propagar a la copia para q lo almacene en bd y guarde estado
+        defp propagacion(copia, op, param, nodo_origen, primeraVez) do
+            send({:servidor_sa, copia}, {:propagacion, op, param, nodo_origen, primeraVez})
+            receive do
+              {:okPropagacion} -> true
+            after @intervalo_latido -> false    #la copia no ha guardado la info
+            end
+        end
+
+        #guarda estado/bd cuando se realiza una lectura por primera vez
+        defp guardarEstado(:lee, param, nodo_origen, true, almacen) do
+             estadoNuevo = Map.put(almacen.estado, nodo_origen, Tuple.elem(param,1))
+             {%{almacen | estado: estadoNuevo}, Map.get(almacen.bbdd, param)}
+        end
+
+        #guarda estado/bd cuando se realiza una ecritura por primera vez
+        defp guardarEstado(:escribe_generico, param, nodo_origen, true, almacen) do
+            bbddNuevo = Map.put(almacen.bbdd, Tuple.elem(param,0), Tuple.elem(param,1))
+            estadoNuevo = Map.put(almacen.estado, nodo_origen, Tuple.elem(param,1))
+            {%{almacen | bbdd: bbddNuevo, estado: estadoNuevo}, Tuple.elem(param,1)}
+        end
+
+        #devuelve valor del utlimo estado cuando se realiza una lectura/ecritura y no es la primera vez
+        defp guardarEstado(op, param, nodo_origen, false, almacen) do
+             {almacen, Map.get(almacen.estado, nodo_origen)}
+        end
 
         defp comprobarTransferencia(vista, vistaTentativa, nodo_servidor_gv, almacen) do
           {vistaValida, ok} = ClienteGV.obten_vista(nodo_servidor_gv)
@@ -119,7 +152,7 @@ defmodule ServidorSA do
             send({:servidor_sa, copia}, {:transferencia, almacen})
             receive do
               {:okTransferencia} -> true
-            after 1000 -> false     #la copia no ha confirmado su transferencia! FALLO
+            after @intervalo_latido -> false     #la copia no ha confirmado su transferencia! FALLO
             end
         end
     end
