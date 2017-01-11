@@ -79,7 +79,7 @@ defmodule ServidorGV do
                 IO.puts("vTentativa: nVista #{Map.get(vista.vistaTentativa, :num_vista)
                 } primario #{Map.get(vista.vistaTentativa, :primario)
                 } copia #{Map.get(vista.vistaTentativa, :copia)}")
-                send({:cliente_gv, nodo_origen}, {:vista_tentativa, vista.vistaTentativa, true})
+                send({:servidor_sa, nodo_origen}, {:vista_tentativa, vista.vistaTentativa, true})
                 vista
 
            {:obten_vista, pid} ->

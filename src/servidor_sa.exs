@@ -35,28 +35,19 @@ defmodule ServidorSA do
 
     def init_sa(nodo_servidor_gv) do
         Process.register(self(), :servidor_sa)
-        nodo = NodoRemoto.start("127.0.0.1", procesoLatidos, __ENV__.file, __MODULE__)
-        Node.spawn(nodo, __MODULE__, :enviarLatido, [nodo_servidor_gv, 0])
-        Process.register(self(), :cliente_gv)
-
- 
-
-
-
+        spawn(__MODULE__, :enviarLatido, [self()])
     #------------- VUESTRO CODIGO DE INICIALIZACION AQUI..........
-
-
-
+        IO.puts(" #{nodo_servidor_gv}, #{%ServidorSA{}}")
          # Poner estado inicial
         bucle_recepcion_principal(ServidorGV.vista_inicial(), nodo_servidor_gv, %ServidorSA{})
     end
 
 
-    def enviarLatido(nodo_servidor_gv, vista) do
-      send(self(), :enviarLatido)
+    def enviarLatido(pidServidor) do
+      send(pidServidor, :enviarLatido)
 
       Process.sleep(50)
-      enviarLatido(nodo_servidor_gv, vistaTentativa)
+      enviarLatido(pidServidor)
     end
 
     defp bucle_recepcion_principal(vista, nodo_servidor_gv, almacen) do
@@ -103,7 +94,7 @@ defmodule ServidorSA do
 
         # --------------- OTROS MENSAJES QE NECESITEIS
         end
-        bucle_recepcion_principal(nuevaVista, nodo_servidor_gv)
+        bucle_recepcion_principal(nuevaVista, nodo_servidor_gv,almacen)
         end
 
         #Propagar a la copia para q lo almacene en bd y guarde estado
