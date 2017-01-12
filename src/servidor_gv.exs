@@ -168,6 +168,7 @@ defmodule ServidorGV do
                 {nuevaVista, true}
         end
         if (todoBien == false) do
+            IO.puts("Fallo del sistema")
             exit(:kill)
         end
         nueva_vista

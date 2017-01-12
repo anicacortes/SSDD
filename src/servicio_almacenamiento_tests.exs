@@ -47,7 +47,7 @@ defmodule  ServicioAlmacenamientoTest do
         IO.puts(" ... Superado")
     end
 
-    #@tag :no_ejecutar
+    @tag :no_ejecutar
     test "Algunas escrituras" do
         #IO.puts "Pids de nodo MAESTRO ~p: principal = ~p~n", [node, self]
 
@@ -157,6 +157,33 @@ defmodule  ServicioAlmacenamientoTest do
 
          IO.puts(" ... Superado")
     end
+
+    #@tag :no_ejecutar
+    test "opcional 1" do
+        IO.puts("Test: Parada de todos, adicion de uno nuevo ...")
+        # Poner en marcha nodos
+        Process.register(self(), :servidor_sa)
+
+        # Arrancar nodos : 1 GV, 3 servidores y 3 cliente de almacenamiento
+        # Lista de tupas con informacion para crear diferentes nodos
+        gv = ServidorGV.start(@host1, "gv")
+        sa1 = ServidorSA.start(@host3, "sa1", gv)
+        sa2 = ServidorSA.start(@host3, "sa2", gv)
+        ca1 = ClienteSA.start(@host2, "ca1", gv)
+
+        Process.sleep(300)
+
+        # Parar todos los nodos
+        parar_nodos([ca1, sa1, sa2])
+
+        Process.sleep(500)
+
+        sa1 = ServidorSA.start(@host3, "sa1", gv)
+
+        IO.puts(" ... Superado")
+    end
+
+
 
     # ------------------ FUNCIONES DE APOYO A TESTS ------------------------
 
