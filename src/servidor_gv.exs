@@ -41,9 +41,7 @@ defmodule ServidorGV do
     def start(host, nombre_nodo) do
         nodo = NodoRemoto.start(host, nombre_nodo,__ENV__.file,
                                 __MODULE__)
-
         Node.spawn(nodo, __MODULE__, :init_sv, [])
-
         nodo
     end
 
@@ -76,9 +74,9 @@ defmodule ServidorGV do
                    Map.get(vista.situacionServidores, :latidosGV) + 1)
                 nuevaVista = %{vista | situacionServidores: nuevaSitServ}
                 vista = procesa_latido(nodo_origen, n_vista, nuevaVista)
-                IO.puts("vTentativa: nVista #{Map.get(vista.vistaTentativa, :num_vista)
-                } primario #{Map.get(vista.vistaTentativa, :primario)
-                } copia #{Map.get(vista.vistaTentativa, :copia)}")
+                #IO.puts("vTentativa: nVista #{Map.get(vista.vistaTentativa, :num_vista)
+                #} primario #{Map.get(vista.vistaTentativa, :primario)
+                #} copia #{Map.get(vista.vistaTentativa, :copia)}")
                 send({:servidor_sa, nodo_origen}, {:vista_tentativa, vista.vistaTentativa, true})
                 vista
 
@@ -182,7 +180,7 @@ defmodule ServidorGV do
         difPrimario = vista.situacionServidores[:latidosGV]-latidosPrimario
         latidosCopia = vista.situacionServidores[vista.vistaTentativa.copia]
         difCopia = vista.situacionServidores[:latidosGV]-latidosCopia
-        IO.puts("difPrimario #{difPrimario} difCopia #{difCopia}")
+        #IO.puts("difPrimario #{difPrimario} difCopia #{difCopia}")
         cond do
             difPrimario >= @latidos_fallidos and difCopia >= @latidos_fallidos ->
                 {vista, false} #fallo critico
@@ -196,7 +194,7 @@ defmodule ServidorGV do
     defp difLatido_primario(vista) do
         latidosPrimario = vista.situacionServidores[vista.vistaTentativa.primario]
         difPrimario = vista.situacionServidores[:latidosGV]-latidosPrimario
-        IO.puts("difPrimario #{difPrimario}")
+        #IO.puts("difPrimario #{difPrimario}")
         if(difPrimario >= @latidos_fallidos) do
            falloPrimario(vista)
         else
@@ -301,5 +299,10 @@ defmodule ServidorGV do
         IO.puts("Caida inesperada copia")
         {nuevaVista, _todoBien} = falloCopia(vista)
         nuevaVista
+    end
+
+
+    def intervalo_latido() do
+        @periodo_latido
     end
 end

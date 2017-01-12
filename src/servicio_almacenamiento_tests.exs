@@ -6,7 +6,7 @@ Code.require_file("#{__DIR__}/cliente_sa.exs")
 
 #Poner en marcha el servicio de tests unitarios con tiempo de vida limitada
 # seed: 0 para que la ejecucion de tests no tenga orden aleatorio
-ExUnit.start([timeout: 30000, seed: 0, exclude: [:no_ejecutar]]) # milisegundos
+ExUnit.start([timeout: 50000, seed: 0, exclude: [:no_ejecutar]]) # milisegundos
 
 defmodule  ServicioAlmacenamientoTest do
 
@@ -49,7 +49,7 @@ defmodule  ServicioAlmacenamientoTest do
 
     #@tag :no_ejecutar
     test "Algunas escrituras" do
-        #:io.format "Pids de nodo MAESTRO ~p: principal = ~p~n", [node, self]
+        #IO.puts "Pids de nodo MAESTRO ~p: principal = ~p~n", [node, self]
 
         #Process.flag(:trap_exit, true)
 
@@ -68,7 +68,7 @@ defmodule  ServicioAlmacenamientoTest do
         IO.puts("Test: Comprobar escritura con primario, copia y espera ...")
 
         # Comprobar primeros nodos primario y copia
-        {%{primario: p, copia: c}, _ok} = ClienteGV.obten_vista(mapa_nodos.gv)       
+        {%{primario: p, copia: c}, _ok} = ClienteGV.obten_vista(mapa_nodos.gv)
         assert p == mapa_nodos.sa1
         assert c == mapa_nodos.sa2
 

@@ -101,18 +101,20 @@ defmodule ClienteSA do
     defp realizar_operacion(op, param, servidor_gv, primeraVez) do
         # Obtener el primario del servicio de almacenamiento
         p = ClienteGV.primario(servidor_gv)
-    
+
         case p do
             :undefined ->  # esperamos un rato si aparece primario
                 Process.sleep(ServidorGV.intervalo_latido())
                 realizar_operacion(op, param, servidor_gv, true)
 
             nodo_primario ->   # enviar operación a ejecutar a primario
+
                 send({:servidor_sa, nodo_primario}, {op, param, Node.self(), primeraVez})
 
                 # recuperar resultado
                 receive do
                     {:resultado, :no_soy_primario_valido} ->
+                        IO.puts("No soy primario")
                         realizar_operacion(op, param, servidor_gv, true)
 
                     {:resultado, valor} -> 
@@ -120,7 +122,8 @@ defmodule ClienteSA do
 
                 # Sin resultado en tiempo establecido ?
                 # -> se vuelve a pedir operacion al primario en curso
-                after ServidorGV.intervalo_latido() ->
+                after 1500 ->
+                    IO.puts("Reintento")
                     realizar_operacion(op, param, servidor_gv, false)
                 end
         end
