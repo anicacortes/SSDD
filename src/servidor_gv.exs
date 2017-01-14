@@ -82,7 +82,6 @@ defmodule ServidorGV do
 
            {:obten_vista, pid} ->
                 if vista.vistaValida.primario == :undefined do
-                    IO.inspect "Primario indefinido"
                     send(pid, {:vista_valida, vista.vistaValida, false})
                 else
                     send(pid, {:vista_valida, vista.vistaValida,

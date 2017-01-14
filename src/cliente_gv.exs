@@ -17,6 +17,7 @@ defmodule ClienteGV do
                 {vista, is_ok?}
 
         after @tiempo_espera_de_respuesta ->
+            IO.puts("No contesta a latido")
             {ServidorGV.vista_inicial(), false}
         end
     end

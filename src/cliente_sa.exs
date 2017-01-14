@@ -42,10 +42,10 @@ defmodule ClienteSA do
        La especificación del interfaz de la función es la siguiente :
                             (se puede utilizar también para "dialyzer")
     """
-    @spec escribe_generico( node(), String.t, String.t, boolean ) :: String.t
-    def escribe_generico(nodo_cliente, clave, nuevo_valor, con_hash) do
+    @spec escribe_generico( node(), String.t, String.t, boolean, boolean ) :: String.t
+    def escribe_generico(nodo_cliente, clave, nuevo_valor, espera, con_hash) do
         send({:cliente_sa, nodo_cliente}, {:escribe_generico, 
-                                        {clave, nuevo_valor, con_hash}, self()})
+                                        {clave, nuevo_valor, espera, con_hash}, self()})
 
         receive do
             {:resultado, valor} -> valor
@@ -63,17 +63,17 @@ defmodule ClienteSA do
     @doc """
        - Devuelve nuevo valor escrito
     """
-    @spec escribe( node(), String.t, String.t ) :: String.t
-    def escribe(nodo_cliente, clave, nuevo_valor) do
-        escribe_generico(nodo_cliente, clave, nuevo_valor, false)
+    @spec escribe( node(), String.t, String.t, boolean ) :: String.t
+    def escribe(nodo_cliente, clave, nuevo_valor, espera) do
+        escribe_generico(nodo_cliente, clave, nuevo_valor, espera, false)
     end
 
     @doc """
        - Devuelve valor anterior
     """
-    @spec escribe_hash( node(), String.t, String.t ) :: String.t
-    def escribe_hash(nodo_cliente, clave, nuevo_valor) do
-        escribe_generico(nodo_cliente, clave, nuevo_valor, true)
+    @spec escribe_hash( node(), String.t, String.t, boolean ) :: String.t
+    def escribe_hash(nodo_cliente, clave, nuevo_valor, espera) do
+        escribe_generico(nodo_cliente, clave, nuevo_valor, espera, true)
     end
     
 
@@ -114,17 +114,19 @@ defmodule ClienteSA do
                 # recuperar resultado
                 receive do
                     {:resultado, :no_soy_primario_valido} ->
-                        IO.puts("No soy primario")
+                        IO.puts("No soy primario valido")
                         realizar_operacion(op, param, servidor_gv, true)
 
-                    {:resultado, valor} -> 
+                    {:resultado, valor} ->
+                        IO.puts("Cliente recibe valor #{valor}")
                         valor
 
                 # Sin resultado en tiempo establecido ?
                 # -> se vuelve a pedir operacion al primario en curso
                 after ServidorGV.intervalo_latido() ->
                     IO.puts("Reintento")
-                    realizar_operacion(op, param, servidor_gv, false)
+                    #cambiar espera a false
+                    realizar_operacion(op, put_elem(param, 2, false), servidor_gv, false)
                 end
         end
     end

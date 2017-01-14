@@ -13,7 +13,7 @@ Code.require_file("#{__DIR__}/cliente_gv.exs")
 
 #Poner en marcha el servicio de tests unitarios con tiempo de vida limitada
 # seed: 0 para que la ejecucion de tests no tenga orden aleatorio
-ExUnit.start([timeout: 20000, seed: 0]) # milisegundos
+ExUnit.start([timeout: 20000, seed: 0, exclude: [:no_ejecutar]]) # milisegundos
 
 defmodule  GestorVistasTest do
 
@@ -22,6 +22,8 @@ defmodule  GestorVistasTest do
     # @moduletag timeout 100  para timeouts de todos lo test de este modulo
 
     @host1 "127.0.0.1"
+
+    @host2 "155.210.154.192"
 
     @latidos_fallidos 4
 
@@ -36,8 +38,8 @@ defmodule  GestorVistasTest do
         c3 = :"c3@127.0.0.1"
         sv = ServidorGV.start(@host1, "sv")
         c1 = ClienteGV.start(@host1, "c1", sv)
-        c2 = ClienteGV.start(@host1, "c2", sv)
-        c3 = ClienteGV.start(@host1, "c3", sv)
+        c2 = ClienteGV.start(@host2, "c2", sv)
+        c3 = ClienteGV.start(@host2, "c3", sv)
 
         on_exit fn ->
                     #eliminar_nodos(sv, c1, c2, c3)
@@ -133,7 +135,7 @@ defmodule  GestorVistasTest do
 
     end
 
-
+     #@tag :no_ejecutar
     ## Test 7 : Primario rearrancado (C2) es tratado como caido.
      test "Primario rearrancado (C2) es tratado como caido", %{c1: c1, c2: c2, c3: c3} do
          IO.puts("Test:Primario rearrancado (C2) es tratado como caido ...")
@@ -152,27 +154,29 @@ defmodule  GestorVistasTest do
     ##          Poner C3 como Primario, C1 como Copia, C2 para comprobar
     ##          - C3 no confirma vista en que es primario,
     ##          - Cae, pero C1 no es promocionado porque C3 no confimo !
-#    test "Servidor de vistas espera a que primario confirme vista pero este no lo hace.", %{c1: c1, c2: c2, c3: c3} do
-#        IO.puts("Test:Servidor de vistas espera a que primario confirme vista pero este no lo hace ...")
-#        {vista, _} = ClienteGV.latido(c3, -1)
-#        #Tiramos al primario c1
-#        espera_releva_copia(c3, c2, vista.num_vista, @latidos_fallidos * 2)
-#        #Metemos a c1 como espera
-#        ClienteGV.latido(c1, 0)
-#        #Ahora hay que tirar a c2 que esta como copia
-#        espera_releva_copia(c3, c1, vista.num_vista, @latidos_fallidos * 2)
-#        {vista, _} = ClienteGV.latido(c2, 0)
-#        #Situacion del test
-#        espera_releva_copia(c1, c2, vista.num_vista, @latidos_fallidos * 2)
-#        {vista, coincide} = ClienteGV.obten_vista(c1)
-#        assert coincide==false
-#        IO.puts(" ... Superado")
-#        end
+    @tag :no_ejecutar
+    test "Servidor de vistas espera a que primario confirme vista pero este no lo hace.", %{c1: c1, c2: c2, c3: c3} do
+        IO.puts("Test:Servidor de vistas espera a que primario confirme vista pero este no lo hace ...")
+        {vista, _} = ClienteGV.latido(c3, -1)
+        #Tiramos al primario c1
+        espera_releva_copia(c3, c2, vista.num_vista, @latidos_fallidos * 2)
+        #Metemos a c1 como espera
+        ClienteGV.latido(c1, 0)
+        #Ahora hay que tirar a c2 que esta como copia
+        espera_releva_copia(c3, c1, vista.num_vista, @latidos_fallidos * 2)
+        {vista, _} = ClienteGV.latido(c2, 0)
+        #Situacion del test
+        espera_releva_copia(c1, c2, vista.num_vista, @latidos_fallidos * 2)
+        {vista, coincide} = ClienteGV.obten_vista(c1)
+        assert coincide==false
+        IO.puts(" ... Superado")
+        end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     ## Test 9 : Si anteriores servidores caen (Primario  y Copia),
     ##       un nuevo servidor sin inicializar no puede convertirse en primario.
     # sin_inicializar_no(C1, C2, C3),
+    #@tag :no_ejecutar
     test "Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario", %{c1: c1, c2: c2, c3: c3} do
             IO.puts("Test: Si anteriores servidores caen, nuevo servidor sin inicializar no puede ser primario ...")
             {vista, _} = ClienteGV.latido(c2, 0)    #Poner c2 en espera
@@ -183,34 +187,36 @@ defmodule  GestorVistasTest do
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     #Fallo de red
-#    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
-#         IO.puts("Test: Fallo de red, sustituye al primario ...")
-#
-#         {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
-#
-#         #espera fallo del primario c1
-#         espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
-#
-#         {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
-#         #cae copia y no hay en espera
-#         espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
-#         comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
-#         IO.puts(" ... Superado")
-#    end
+     @tag :no_ejecutar
+    test "Fallo de red, sustituye al primario", %{c1: c1, c2: c2, c3: c3} do
+         IO.puts("Test: Fallo de red, sustituye al primario ...")
+
+         {vistaRetrasada, _} = ClienteGV.latido(c1, -1)
+
+         #espera fallo del primario c1
+         espera_releva_copia(c3, c2, vistaRetrasada.num_vista, @latidos_fallidos * 2)
+
+         {vista, _} = ClienteGV.latido(c3, vistaRetrasada.num_vista+1) #valida
+         #cae copia y no hay en espera
+         espera_releva_copia(c3, c3, vista.num_vista, @latidos_fallidos * 2)
+         comprobar_caido(c1, c3, c1, vista.num_vista, vistaRetrasada)
+         IO.puts(" ... Superado")
+    end
 
     #Situacion previa: numVista 5 primario c1 copia c3 espera c2
     #Caida rapida de un servidor (envia latido 0)
-#    test "Fallo del servidor sin que lo detecte GV", %{c1: c1, c2: c2, c3: c3} do
-#         IO.puts("Test: Fallo del servidor sin que lo detecte GV...")
-#
-#         {vista, _} = ClienteGV.latido(c1, 0) #FALLO
-#         Process.sleep(@intervalo_latido)
-#         #valida el nuevo primario
-#         {vista, _} = ClienteGV.latido(c3, vista.num_vista + 1)
-#
-#         comprobar_valida(c3, c3, c2, vista.num_vista)
-#         IO.puts(" ... Superado")
-#    end
+     @tag :no_ejecutar
+    test "Fallo del servidor sin que lo detecte GV", %{c1: c1, c2: c2, c3: c3} do
+         IO.puts("Test: Fallo del servidor sin que lo detecte GV...")
+
+         {vista, _} = ClienteGV.latido(c1, 0) #FALLO
+         Process.sleep(@intervalo_latido)
+         #valida el nuevo primario
+         {vista, _} = ClienteGV.latido(c3, vista.num_vista + 1)
+
+         comprobar_valida(c3, c3, c2, vista.num_vista)
+         IO.puts(" ... Superado")
+    end
 
 
     # ------------------ FUNCIONES DE APOYO A TESTS ------------------------

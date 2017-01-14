@@ -73,9 +73,9 @@ defmodule  ServicioAlmacenamientoTest do
         assert c == mapa_nodos.sa2
 
 
-        ClienteSA.escribe(mapa_nodos.ca1, "a", "aa")
-        ClienteSA.escribe(mapa_nodos.ca1, "b", "bb")
-        ClienteSA.escribe(mapa_nodos.ca1, "c", "cc")
+        ClienteSA.escribe(mapa_nodos.ca1, "a", "aa", false)
+        ClienteSA.escribe(mapa_nodos.ca1, "b", "bb", false)
+        ClienteSA.escribe(mapa_nodos.ca1, "c", "cc", false)
         comprobar(mapa_nodos.ca1, "a", "aa")
         comprobar(mapa_nodos.ca1, "b", "bb")
         comprobar(mapa_nodos.ca1, "c", "cc")
@@ -90,7 +90,7 @@ defmodule  ServicioAlmacenamientoTest do
 
         Process.sleep(700) # esperar a reconfiguracion de servidores
 
-        ClienteSA.escribe(mapa_nodos.ca1, "a", "aaa")
+        ClienteSA.escribe(mapa_nodos.ca1, "a", "aaa", false)
         comprobar(mapa_nodos.ca1, "a", "aaa")
 
         # Comprobar los nuevo nodos primario y copia
@@ -128,7 +128,7 @@ defmodule  ServicioAlmacenamientoTest do
 
         # Escritura concurrente de mismas 2 claves, pero valores diferentes
         # Posteriormente comprobar que estan igual en primario y copia
-        escritura_concurrente(mapa_nodos)
+        escritura_concurrente(mapa_nodos, false)
 
         Process.sleep(200)
 
@@ -158,7 +158,7 @@ defmodule  ServicioAlmacenamientoTest do
          IO.puts(" ... Superado")
     end
 
-    #@tag :no_ejecutar
+    @tag :no_ejecutar
     test "opcional 1" do
         IO.puts("Test: Parada de todos, adicion de uno nuevo ...")
         # Poner en marcha nodos
@@ -174,16 +174,108 @@ defmodule  ServicioAlmacenamientoTest do
         Process.sleep(300)
 
         # Parar todos los nodos
-        parar_nodos([ca1, sa1, sa2])
-
+        parar_nodos([sa1, sa2])
         Process.sleep(500)
 
+        #El servidor no tiene q contestar pq ha fallado
         sa1 = ServidorSA.start(@host3, "sa1", gv)
+        Process.sleep(100)
 
         IO.puts(" ... Superado")
     end
 
+    @tag :no_ejecutar
+    test "opcional 2" do
+        IO.puts("Test: Peticion escritura duplicada por perdida de respuesta ...")
+        # Poner en marcha nodos
+        Process.register(self(), :servidor_sa)
 
+        # Arrancar nodos : 1 GV, 3 servidores y 3 cliente de almacenamiento
+        # Lista de tupas con informacion para crear diferentes nodos
+        gv = ServidorGV.start(@host1, "gv")
+        sa1 = ServidorSA.start(@host3, "sa1", gv)
+        sa2 = ServidorSA.start(@host3, "sa2", gv)
+        ca1 = ClienteSA.start(@host2, "ca1", gv)
+
+        vEscribir = ClienteSA.escribe(ca1, "a", "aa", true)
+
+        assert vEscribir == "aa"
+
+        # Parar todos los nodos
+        parar_nodos([sa1, sa2])
+
+        IO.puts(" ... Superado")
+    end
+
+    @tag :no_ejecutar
+    test "opcional 3" do
+        IO.puts("Test: Petición de escritura después de caída de nodo copia con espera ...")
+        # Poner en marcha nodos
+        Process.register(self(), :servidor_sa)
+
+        # Arrancar nodos : 1 GV, 3 servidores y 3 cliente de almacenamiento
+        # Lista de tupas con informacion para crear diferentes nodos
+        lista_datos_nodos = [gv: [@host0, "gv"],
+                  sa: [@host1, "sa1"], sa: [@host2, "sa2"], sa: [@host3, "sa3"],
+                  ca: [@host0, "ca1"]]
+        mapa_nodos = arrancar_nodos(lista_datos_nodos)
+
+        #caida copia
+        parar_nodos([mapa_nodos.sa2])
+        Process.sleep(200)  # Esperar detección fallo y reconfiguración
+        vEscribir = ClienteSA.escribe(mapa_nodos.ca1, "a", "aa", false)
+
+        assert vEscribir == "aa"
+
+        # Parar todos los nodos
+        parar_nodos(mapa_nodos)
+
+        IO.puts(" ... Superado")
+    end
+
+    @tag :no_ejecutar
+    test "opcional 4" do
+        IO.puts("Test: Escrituras concurrentes de varios clientes sobre
+           la misma clave, con comunicación  con fallos ...")
+        # Poner en marcha nodos
+        Process.register(self(), :servidor_sa)
+
+         # Arrancar nodos : 1 GV, 3 servidores y 3 cliente de almacenamiento
+        # Lista de tupas con informacion para crear diferentes nodos
+        lista_datos_nodos = [gv: [@host0, "gv"],
+                  sa: [@host1, "sa1"], sa: [@host2, "sa2"],
+                  ca: [@host0, "ca1"], ca: [@host0, "ca2"]]
+        mapa_nodos = arrancar_nodos(lista_datos_nodos)
+
+        # Escritura concurrente de mismas 2 claves, pero valores diferentes y
+        #con fallos. Se comprueba que estan igual en primario y copia
+        escritura_concurrente_fallo(mapa_nodos, true)
+
+        #Obtener valor de las clave "0" y "1" con el primer primario
+        valor1primario = ClienteSA.lee(mapa_nodos.ca1, "0")
+        valor2primario = ClienteSA.lee(mapa_nodos.ca2, "0")
+
+        # Forzar parada de primario
+        NodoRemoto.stop(ClienteGV.primario(mapa_nodos.gv))
+
+        # Esperar detección fallo y reconfiguración copia a primario
+        Process.sleep(200)
+
+        # Obtener valor de clave "0" y "1"con segundo primario (copia anterior)
+         valor1copia = ClienteSA.lee(mapa_nodos.ca1, "0")
+         valor2copia = ClienteSA.lee(mapa_nodos.ca2, "0")
+
+        IO.puts "valor1primario = #{valor1primario}, valor1copia = #{valor1copia}"
+            <> "valor2primario = #{valor2primario}, valor2copia = #{valor2copia}"
+        # Verificar valores obtenidos con primario y copia inicial
+        assert valor1primario == valor1copia
+        assert valor2primario == valor2copia
+
+        # Parar todos los nodos
+        parar_nodos(mapa_nodos)
+
+        IO.puts(" ... Superado")
+    end
 
     # ------------------ FUNCIONES DE APOYO A TESTS ------------------------
 
@@ -201,13 +293,13 @@ defmodule  ServicioAlmacenamientoTest do
 
     # Ejecutar durante un tiempo una escritura continuada de 2 clientes sobre
     # las mismas 2 claves pero con 3 valores diferentes de forma concurrente
-    def escritura_concurrente(mapa_nodos) do
+    def escritura_concurrente(mapa_nodos, esperar) do
         aleat1 = :rand.uniform(1000)
-        pid1 =spawn(__MODULE__, :bucle_infinito, [mapa_nodos.ca1, aleat1])
+        pid1 =spawn(__MODULE__, :bucle_infinito, [mapa_nodos.ca1, aleat1, esperar])
         aleat2 = :rand.uniform(1000)
-        pid2 =spawn(__MODULE__, :bucle_infinito, [mapa_nodos.ca2, aleat2])
+        pid2 =spawn(__MODULE__, :bucle_infinito, [mapa_nodos.ca2, aleat2, esperar])
         aleat3 = :rand.uniform(1000)
-        pid3 =spawn(__MODULE__, :bucle_infinito, [mapa_nodos.ca3, aleat3])
+        pid3 =spawn(__MODULE__, :bucle_infinito, [mapa_nodos.ca3, aleat3, esperar])
 
         Process.sleep(3000)
 
@@ -216,7 +308,7 @@ defmodule  ServicioAlmacenamientoTest do
         Process.exit(pid3, :kill)
     end
 
-    def bucle_infinito(nodo_cliente, aleat) do
+    def bucle_infinito(nodo_cliente, aleat, esperar) do
         clave = Integer.to_string(rem(aleat, 2)) # solo claves "0" y "1"
         valor = Integer.to_string(aleat)
         miliseg = :rand.uniform(300)
@@ -226,9 +318,36 @@ defmodule  ServicioAlmacenamientoTest do
         :io.format "Proceso ~p, escribe clave = ~p, valor = ~p, sleep = ~p~n",
                     [self, clave, valor, miliseg]
 
-        ClienteSA.escribe(nodo_cliente, clave, valor)
+        ClienteSA.escribe(nodo_cliente, clave, valor, esperar)
 
-        bucle_infinito(nodo_cliente, aleat)
+        bucle_infinito(nodo_cliente, aleat, esperar)
+    end
+
+    # Ejecutar durante un tiempo una escritura continuada de 2 clientes sobre
+    # las mismas 2 claves pero con 3 valores diferentes de forma concurrente
+    def escritura_concurrente_fallo(mapa_nodos, esperar) do
+        aleat1 = :rand.uniform(1000)
+        pid1 =spawn(__MODULE__, :bucle_infinito_fallo, [mapa_nodos.ca1, aleat1, esperar])
+        aleat2 = :rand.uniform(1000)
+        pid2 =spawn(__MODULE__, :bucle_infinito_fallo, [mapa_nodos.ca2, aleat2, esperar])
+
+        Process.sleep(5000)
+        IO.puts("MATAR MATAR")
+        Process.exit(pid1, :kill)
+        Process.exit(pid2, :kill)
+    end
+
+    def bucle_infinito_fallo(nodo_cliente, aleat, esperar) do
+        clave = Integer.to_string(0) # solo clave 0
+        valor = Integer.to_string(aleat)
+        miliseg = :rand.uniform(300)
+
+        Process.sleep(miliseg)
+
+        :io.format "Proceso ~p, escribe clave = ~p, valor = ~p, sleep = ~p~n",
+                    [self, clave, valor, miliseg]
+
+        ClienteSA.escribe(nodo_cliente, clave, valor, esperar)
     end
 
 
