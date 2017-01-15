@@ -1,3 +1,10 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servidor_gv.exs
+#  Tiempo: 0.5h
+# Descripcion: Clase correspondiente al cliente externo,encargado de pedir operaciones
+#####
 Code.require_file("#{__DIR__}/cliente_gv.exs")
 
 defmodule ClienteSA do

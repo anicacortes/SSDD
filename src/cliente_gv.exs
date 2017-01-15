@@ -1,3 +1,10 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servidor_gv.exs
+#  Tiempo: 0h
+# Descripcion: Clase correspondiente al cliente
+#####
 Code.require_file("#{__DIR__}/servidor_gv.exs")
 
 defmodule ClienteGV do

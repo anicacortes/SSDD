@@ -1,3 +1,10 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servidor_gv.exs
+#  Tiempo: 2h
+# Descripcion: Clase correspondiente a la comprobacion del sistema
+#####
 Code.require_file("#{__DIR__}/nodo_remoto.exs")
 Code.require_file("#{__DIR__}/servidor_gv.exs")
 Code.require_file("#{__DIR__}/cliente_gv.exs")
@@ -6,7 +13,7 @@ Code.require_file("#{__DIR__}/cliente_sa.exs")
 
 #Poner en marcha el servicio de tests unitarios con tiempo de vida limitada
 # seed: 0 para que la ejecucion de tests no tenga orden aleatorio
-ExUnit.start([timeout: 50000, seed: 0, exclude: [:no_ejecutar]]) # milisegundos
+ExUnit.start([timeout: 100000, seed: 0, exclude: [:no_ejecutar]]) # milisegundos
 
 defmodule  ServicioAlmacenamientoTest do
 
@@ -59,7 +66,8 @@ defmodule  ServicioAlmacenamientoTest do
         # Arrancar nodos : 1 GV, 3 servidores y 1 cliente de almacenamiento
         # Lista de tupas con informacion para crear diferentes nodos
         lista_datos_nodos = [gv: [@host0, "gv"], ca: [@host0, "ca1"],
-                  sa: [@host1, "sa1"], sa: [@host2, "sa2"], sa: [@host3, "sa3"] ]
+                  sa: [@host1, "sa1"], sa: [@host2, "sa2"],
+                  sa: [@host3, "sa3"] ]
         mapa_nodos = arrancar_nodos(lista_datos_nodos)
 
         # Espera configuracion y relacion entre nodos
@@ -114,7 +122,8 @@ defmodule  ServicioAlmacenamientoTest do
         # Arrancar nodos : 1 GV, 3 servidores y 3 cliente de almacenamiento
         # Lista de tupas con informacion para crear diferentes nodos
         lista_datos_nodos = [gv: [@host0, "gv"],
-                  sa: [@host1, "sa1"], sa: [@host2, "sa2"], sa: [@host3, "sa3"],
+                  sa: [@host1, "sa1"], sa: [@host2, "sa2"],
+                   sa: [@host3, "sa3"],
                   ca: [@host0, "ca1"], ca: [@host0, "ca2"], ca: [@host0, "ca3"]]
         mapa_nodos = arrancar_nodos(lista_datos_nodos)
 
@@ -158,7 +167,7 @@ defmodule  ServicioAlmacenamientoTest do
          IO.puts(" ... Superado")
     end
 
-    @tag :no_ejecutar
+    #@tag :no_ejecutar
     test "opcional 1" do
         IO.puts("Test: Parada de todos, adicion de uno nuevo ...")
         # Poner en marcha nodos
@@ -180,11 +189,13 @@ defmodule  ServicioAlmacenamientoTest do
         #El servidor no tiene q contestar pq ha fallado
         sa1 = ServidorSA.start(@host3, "sa1", gv)
         Process.sleep(100)
+        parar_nodos([ca1, gv, sa1])
 
         IO.puts(" ... Superado")
+
     end
 
-    @tag :no_ejecutar
+    #@tag :no_ejecutar
     test "opcional 2" do
         IO.puts("Test: Peticion escritura duplicada por perdida de respuesta ...")
         # Poner en marcha nodos
@@ -202,7 +213,7 @@ defmodule  ServicioAlmacenamientoTest do
         assert vEscribir == "aa"
 
         # Parar todos los nodos
-        parar_nodos([sa1, sa2])
+        parar_nodos([sa1, sa2, ca1, gv])
 
         IO.puts(" ... Superado")
     end
@@ -216,8 +227,8 @@ defmodule  ServicioAlmacenamientoTest do
         # Arrancar nodos : 1 GV, 3 servidores y 3 cliente de almacenamiento
         # Lista de tupas con informacion para crear diferentes nodos
         lista_datos_nodos = [gv: [@host0, "gv"],
-                  sa: [@host1, "sa1"], sa: [@host2, "sa2"], sa: [@host3, "sa3"],
-                  ca: [@host0, "ca1"]]
+                  sa: [@host1, "sa1"], sa: [@host2, "sa2"],
+                    sa: [@host3, "sa3"],ca: [@host0, "ca1"]]
         mapa_nodos = arrancar_nodos(lista_datos_nodos)
 
         #caida copia

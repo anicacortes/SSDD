@@ -1,3 +1,10 @@
+#####
+# AUTORES: Beatriz Perez, Ana Roig
+#     NIA: 683546,        686329
+# Fichero:servidor_gv.exs
+#  Tiempo: 6h
+# Descripcion: Clase correspondiente al servidor de almacenamiento
+#####
 Code.require_file("#{__DIR__}/cliente_gv.exs")
 
 defmodule ServidorSA do
@@ -35,7 +42,6 @@ defmodule ServidorSA do
     def init_sa(nodo_servidor_gv) do
         Process.register(self(), :servidor_sa)
         spawn(__MODULE__, :enviarLatido, [self()])
-    #------------- VUESTRO CODIGO DE INICIALIZACION AQUI..........
          # Poner estado inicial
         bucle_recepcion_principal(ServidorGV.vista_inicial(), nodo_servidor_gv, %ServidorSA{})
     end
@@ -59,7 +65,7 @@ defmodule ServidorSA do
 
             #La copia recibe el almacen de datos y lo guarda
             {:transferencia, almacenRecibido} ->
-                respuesta = {vista, nodo_servidor_gv, almacenRecibido} #Proceso de transferencia
+                respuesta = {vista, nodo_servidor_gv, almacenRecibido}
                 send({:servidor_sa, vista.primario}, {:okTransferencia})
                 respuesta
 
@@ -71,42 +77,47 @@ defmodule ServidorSA do
                 end
                 {vistaTentativa, _} = ClienteGV.latido(nodo_servidor_gv, numVista)
 
-                if (vistaTentativa.primario == Node.self()) do #marginacion a los secundarios
+                if (vistaTentativa.primario == Node.self()) do
                     comprobarTransferencia(vista, vistaTentativa, nodo_servidor_gv, almacen)
-                    #no hay else -> si no hay copia,no se validara la vista, y si es la copia, ya esta como primario en la tentativa
                 end
                 {vistaTentativa, nodo_servidor_gv, almacen}
 
             # Solicitudes de lectura y escritura de clientes del servicio almace.
             {op, param, nodo_origen, primeraVez}  ->
                 IO.puts("Solicitud de #{op} de #{nodo_origen}")
-                #hablar con los otros pa ver si estan vivos o hay fallo red?? hablar con el GV es suficiente?
                 {vistaValida, coincide} = ClienteGV.obten_vista(nodo_servidor_gv)
                 cond do
 
-                    #Si es pa primera vez, o es reintento pero el valor a devolver no ha sido almacenado -> propagar
+                    #Si es pa primera vez, o es reintento pero el valor a devolver
+                    #no ha sido almacenado -> propagar
                     vistaValida.primario == Node.self() && coincide && (primeraVez or
-                       (op == :lee && Map.get(almacen.estado,nodo_origen) != Map.get(almacen.bbdd,param))
-                       or (op == :escribe_generico && Map.get(almacen.estado,nodo_origen) != Map.get(almacen.bbdd,elem(param,0)))) ->
-                        okProp = propagacion(vistaValida.copia, op, param, nodo_origen, primeraVez)
+                       (op == :lee && Map.get(almacen.estado,nodo_origen)
+                         != Map.get(almacen.bbdd,param))
+                       or (op == :escribe_generico && Map.get(almacen.estado,nodo_origen)
+                         != Map.get(almacen.bbdd,elem(param,0)))) ->
+                        okProp = propagacion(vistaValida.copia, op, param,
+                          nodo_origen, primeraVez)
                         if (okProp) do
                             IO.puts("Propagacion correcta")
-                           {almacen,valor} = guardarEstado(op, param, nodo_origen, primeraVez, almacen)
+                           {almacen,valor} = guardarEstado(op, param, nodo_origen,
+                             primeraVez, almacen)
                            IO.puts("Guardado estado y bbdd: #{nodo_origen} - #{valor}")
 
                            #espera para no contestar a cliente --> simula fallo
-                           if elem(param, 2) do Process.sleep(50) end
-
+                           if op == :escribe_generico && elem(param, 2) do
+                               Process.sleep(50)
+                               end
                            send({:cliente_sa, nodo_origen}, {:resultado, valor})
                         end
 
                     #Si es un reintento -> se devuelve lo d la ultima operacion del estado
                     vistaValida.primario == Node.self() and coincide and !primeraVez ->
-                         {almacen,valor} = guardarEstado(op, param, nodo_origen, primeraVez, almacen)
+                         {almacen,valor} = guardarEstado(op, param, nodo_origen,
+                            primeraVez, almacen)
                           IO.puts("Devolviendo sin guardar: #{nodo_origen} - #{valor}")
                          send({:cliente_sa, nodo_origen}, {:resultado, valor})
                     true ->
-                        send({:cliente_sa, nodo_origen}, {:resultado, :no_soy_primario_valido})
+                       send({:cliente_sa, nodo_origen}, {:resultado, :no_soy_primario_valido})
                 end
                 {vista, nodo_servidor_gv, almacen}
             end
@@ -136,17 +147,19 @@ defmodule ServidorSA do
         end
 
         #devuelve valor del utlimo estado cuando se realiza una lectura/ecritura y no es la primera vez
-        defp guardarEstado(op, param, nodo_origen, false, almacen) do
+        defp guardarEstado(_, _, nodo_origen, false, almacen) do
              {almacen, Map.get(almacen.estado, nodo_origen)}
         end
 
         #Comprueba si hay que realizar transferencia por caso de fallo
         defp comprobarTransferencia(vista, vistaTentativa, nodo_servidor_gv, almacen) do
-          {vistaValida, ok} = ClienteGV.obten_vista(nodo_servidor_gv)
-          if(vistaValida != vistaTentativa && vistaTentativa.copia != :undefined) do           #no coinciden la valida y la tentativa ->hay caida, y soy primario -> copia
+          {vistaValida, _} = ClienteGV.obten_vista(nodo_servidor_gv)
+          #no coinciden la valida y la tentativa ->hay caida, y soy primario -> copia
+          if(vistaValida != vistaTentativa && vistaTentativa.copia != :undefined) do
               IO.puts("Transferencia almacen...")
-              if(hacerTransferencia(almacen, vistaTentativa.copia)) do #transferir a la nueva copia
-                  {vistaTentativa,_} = ClienteGV.latido(nodo_servidor_gv, vistaTentativa.num_vista)
+              if(hacerTransferencia(almacen, vistaTentativa.copia)) do
+                  {vistaTentativa,_} = ClienteGV.latido(nodo_servidor_gv,
+                     vistaTentativa.num_vista)
                   {vistaTentativa, nodo_servidor_gv, almacen}
               else
                   {vista, nodo_servidor_gv, almacen}
@@ -161,7 +174,7 @@ defmodule ServidorSA do
               {:okTransferencia} ->
                IO.puts("OkTransferencia")
                true
-            after @intervalo_latido -> false     #la copia no ha confirmado su transferencia! FALLO
+            after @intervalo_latido -> false #la copia no ha confirmado su transferencia! FALLO
             end
         end
     end

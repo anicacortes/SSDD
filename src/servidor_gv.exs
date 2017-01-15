@@ -30,7 +30,6 @@ defmodule ServidorGV do
         Generar una estructura de datos vista inicial
     """
     def vista_inicial() do
-        #%ServidorGV{vistaValida: {0,:undefined,:undefined}, vistaTentativa: {0,:undefined,:undefined}}
         %ServidorGV{}.vistaTentativa
     end
 
@@ -74,9 +73,6 @@ defmodule ServidorGV do
                    Map.get(vista.situacionServidores, :latidosGV) + 1)
                 nuevaVista = %{vista | situacionServidores: nuevaSitServ}
                 vista = procesa_latido(nodo_origen, n_vista, nuevaVista)
-                #IO.puts("vTentativa: nVista #{Map.get(vista.vistaTentativa, :num_vista)
-                #} primario #{Map.get(vista.vistaTentativa, :primario)
-                #} copia #{Map.get(vista.vistaTentativa, :copia)}")
                 send({:servidor_sa, nodo_origen}, {:vista_tentativa, vista.vistaTentativa, true})
                 vista
 
